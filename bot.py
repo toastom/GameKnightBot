@@ -1,13 +1,13 @@
 
-import os
-import discord
-import random
 
 import os, discord, random, sys
 
 from discord.ext import commands
-from discord.utils import get
+from discord.utils import find
+
 import gspread
+from gspread import Client
+
 from oauth2client.service_account import ServiceAccountCredentials
 
 # We'll need to substitute the Prefix for an Enviroment Variable
@@ -15,11 +15,11 @@ BOT_PREFIX = os.environ['prefix'] # -Prefix is need to declare a Command in disc
 TOKEN = os.environ['token'] # The token is also substituted for security reasons
 
 bot = commands.Bot(command_prefix=BOT_PREFIX)
-#Google Credentials authorization
+# Google Credentials authorization
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive.file",
         "https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
-client = gspread.authorize(creds)
+client: Client = gspread.authorize(creds)
 
 @bot.event
 async def on_ready():
@@ -38,12 +38,25 @@ async def on_ready():
     print('\n'.join('>'+ server.name for server in servers))
     print('------')
 
+@bot.event
+async def on_guild_join(guild):
+    spreadsheet = {
+        'properties': {
+            'title': guild.name,
+            'developerMetadata': guild.id
+        }
+    }
+    spreadsheet = client.create(guild.name)
+    spreadsheet.share('gameknightbot@gmail.com', perm_type='user', role='writer')
+    general = find(lambda x: x.name == 'general', guild.text_channels)
+    if general and general.permissions_for(guild.me).send_messages:
+        await general.send('Hello a Spreadsheet with the name `{}` has been created for your server'.format(str(guild.name)))
 
 
 
 @bot.command(name="addgame")
 async def add_game(ctx, game):
-    spread = client.open("Testing")
+    spread = client.open(ctx.guild.name)
     try:
         new_game = spread.add_worksheet(title=str(game), rows="1000", cols="26")
     except gspread.exceptions.APIError:
@@ -53,6 +66,7 @@ async def add_game(ctx, game):
         return
 
     await ctx.message.channel.send("New game {} added".format(str(game)))
+
 
 
 bot.run(TOKEN)
