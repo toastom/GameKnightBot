@@ -1,5 +1,4 @@
 
-
 import os, discord, random, sys
 
 from discord.ext import commands
@@ -29,14 +28,12 @@ async def on_ready():
     print('Logged in as')
     print(bot.user.name)
     print(bot.user.id)
-
-
     print('------')
-
     servers = list(bot.guilds)
     print('Connected on '+ str(len(servers)) + ' servers:')
     print('\n'.join('>'+ server.name for server in servers))
     print('------')
+
 
 @bot.event
 async def on_guild_join(guild):
@@ -59,6 +56,7 @@ async def on_guild_join(guild):
 
 
 
+
 @bot.command(name="addgame")
 async def add_game(ctx, game):
     spread = client.open(ctx.guild.id)
@@ -73,7 +71,9 @@ async def add_game(ctx, game):
 
 @bot.command(name="allgames")
 async def all_games(ctx):
+
     spread = client.open(ctx.guild.id)
+
     sheets = spread.worksheets()
     print(sheets)
 
@@ -87,7 +87,9 @@ async def all_games(ctx):
 
 @bot.command(name="deletegame")
 async def delete_game(ctx, game=None):
+
     spread = client.open(ctx.guild.id)
+
     sheets = spread.worksheets()
 
     for i in sheets:
@@ -99,8 +101,6 @@ async def delete_game(ctx, game=None):
             return
     
     await ctx.message.channel.send("Game {} successfully deleted.".format(str(game)))
-
-
 
 
 bot.run(TOKEN)
