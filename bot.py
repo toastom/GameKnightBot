@@ -128,6 +128,9 @@ async def schedule(ctx, game="", date="", time="", name=""):
                 
                 await ctx.message.channel.send(":white_check_mark: Scheduled game night successfully.")
                 return
+    except gspread.exceptions.APIError:
+        await ctx.message.channel.send("Game does not exist. Make sure arguments are in Game, Date, Time order and try again.\n\
+        if that doesn't work, see the addgame command")     
 
 @bot.command(name="join")
 async def schedule(ctx, eventname=""):
