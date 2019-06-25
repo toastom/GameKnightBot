@@ -47,7 +47,7 @@ async def on_guild_join(guild):
         }
     }
     try:
-        spreadsheet = client.create(guild.name)
+        spreadsheet = client.create(guild.id)
         spreadsheet.share('gameknightbot@gmail.com', perm_type='user', role='writer')
         general = find(lambda x: x.name == 'general', guild.text_channels)
         if general and general.permissions_for(guild.me).send_messages:
@@ -61,7 +61,7 @@ async def on_guild_join(guild):
 
 @bot.command(name="addgame")
 async def add_game(ctx, game):
-    spread = client.open(ctx.guild.name)
+    spread = client.open(ctx.guild.id)
     try:
         spread.add_worksheet(title=str(game), rows="1000", cols="26")
     except gspread.exceptions.APIError:
@@ -73,7 +73,7 @@ async def add_game(ctx, game):
 
 @bot.command(name="allgames")
 async def all_games(ctx):
-    spread = client.open(ctx.guild.name)
+    spread = client.open(ctx.guild.id)
     sheets = spread.worksheets()
     print(sheets)
 
@@ -87,7 +87,7 @@ async def all_games(ctx):
 
 @bot.command(name="deletegame")
 async def delete_game(ctx, game=None):
-    spread = client.open(ctx.guild.name)
+    spread = client.open(ctx.guild.id)
     sheets = spread.worksheets()
 
     for i in sheets:
