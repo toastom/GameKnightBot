@@ -1,4 +1,5 @@
 import os, discord, random, sys
+
 from discord.ext import commands
 from discord.utils import get
 import gspread
@@ -24,8 +25,6 @@ async def on_ready():
     print(bot.user.name)
     print(bot.user.id)
     print('------')
-    print('Owners: Kirbae#0001, tom233145#0069, pinkpi#0001, hamdi#0001')
-    print('------')
     servers = list(bot.guilds)
     print('Connected on '+ str(len(servers)) + ' servers:')
     print('\n'.join('>'+ server.name for server in servers))
@@ -35,7 +34,6 @@ async def on_ready():
 async def add_game(ctx, game):
     spread = client.open("Testing")
     try:
-        #new_game = spread.add_worksheet(title=str(game), rows="1000", cols="26")
         spread.add_worksheet(title=str(game), rows="1000", cols="26")
     except gspread.exceptions.APIError:
         print("A(n) {} error occurred trying to add a game.".format(sys.exc_info()[0]))
@@ -74,3 +72,4 @@ async def delete_game(ctx, game=None):
     await ctx.message.channel.send("Game {} successfully deleted.".format(str(game)))
 
 bot.run(TOKEN)
+
