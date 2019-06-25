@@ -58,14 +58,43 @@ async def on_guild_join(guild):
 async def add_game(ctx, game):
     spread = client.open(ctx.guild.name)
     try:
-        new_game = spread.add_worksheet(title=str(game), rows="1000", cols="26")
+        spread.add_worksheet(title=str(game), rows="1000", cols="26")
     except gspread.exceptions.APIError:
-        print("A(n) {} error occurred.".format(sys.exc_info()[0]))
-        await ctx.message.channel.send("Game is already added.")
-        
+        print("A(n) {} error occurred trying to add a game.".format(sys.exc_info()[0]))
+        await ctx.message.channel.send("Game is already added. :confused:")
         return
 
     await ctx.message.channel.send("New game {} added".format(str(game)))
+
+@bot.command(name="allgames")
+async def all_games(ctx):
+    spread = client.open(ctx.guild.name)
+    sheets = spread.worksheets()
+    print(sheets)
+
+    #Get a list of all worksheets - check
+    #Have the bot say them - sheets - list
+    game_list = ""
+    for i in sheets: #i is a worksheet
+        game_list = game_list + "\n" + i.title
+
+    await ctx.message.channel.send("All added games for this server: \n{}".format(game_list))
+
+@bot.command(name="deletegame")
+async def delete_game(ctx, game=None):
+    spread = client.open(ctx.guild.name)
+    sheets = spread.worksheets()
+
+    for i in sheets:
+        print(str(game), i.title)
+        if(str(game) == i.title):
+            spread.del_worksheet(i)
+        elif(game == None):
+            await ctx.message.channel.send(":fire: Must input a game to delete. :fire:")
+            return
+    
+    await ctx.message.channel.send("Game {} successfully deleted.".format(str(game)))
+
 
 
 
