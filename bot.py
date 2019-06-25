@@ -44,11 +44,11 @@ async def on_guild_join(guild):
         }
     }
     try:
-        spreadsheet = client.create(guild.id)
+        spreadsheet = client.create(str(guild.id))
         spreadsheet.share('gameknightbot@gmail.com', perm_type='user', role='writer')
         general = find(lambda x: x.name == 'general', guild.text_channels)
         if general and general.permissions_for(guild.me).send_messages:
-                await general.send('Hello a Spreadsheet with the name `{}` has been created for your server'.format(str(guild.name)))
+                await general.send('Hello a Spreadsheet with the name `{}` has been created for your server'.format(str(guild.id)))
     except gspread.exceptions.APIError:
         general = find(lambda x: x.name == 'general', guild.text_channels)
         if general and general.permissions_for(guild.me).send_messages:
@@ -59,7 +59,7 @@ async def on_guild_join(guild):
 
 @bot.command(name="addgame")
 async def add_game(ctx, game):
-    spread = client.open(ctx.guild.id)
+    spread = client.open(str(ctx.guild.id))
     try:
         spread.add_worksheet(title=str(game), rows="1000", cols="26")
         sheet = spread.worksheet(game)
@@ -144,7 +144,7 @@ async def schedule(ctx, game="", date="", time="", name=""):
     Searches for each individual element in the specified game,
     if it doesn't exist, create it
     """
-    spread = client.open(ctx.guild.id)
+    spread = client.open(str(ctx.guild.id))
     try:
         sheet = spread.worksheet(game)
 
@@ -156,7 +156,7 @@ async def schedule(ctx, game="", date="", time="", name=""):
                 time_cell = sheet.update_cell(i, cell.col + 1, time)
 
                 if(name != ""):
-                    name_cell = sheet.update_cell(i, cell.col + 3, name)
+                    name_cell = sheet.update_cell(i, cell.col + 2, name)
                 
                 await ctx.message.channel.send(":white_check_mark: Scheduled game night successfully.")
                 return
