@@ -50,9 +50,9 @@ async def on_guild_join(guild):
         if general and general.permissions_for(guild.me).send_messages:
                 await general.send('Hello a Spreadsheet with the name `{}` has been created for your server'.format(str(guild.name)))
     except gspread.exceptions.APIError:
-    general = find(lambda x: x.name == 'general', guild.text_channels)
-    if general and general.permissions_for(guild.me).send_messages:
-        await general.send('Hello a Spreadsheet with the name `{}` couldnt be created')
+        general = find(lambda x: x.name == 'general', guild.text_channels)
+        if general and general.permissions_for(guild.me).send_messages:
+            await general.send('Hello a Spreadsheet with the name `{}` couldnt be created')
 
 
 
@@ -95,7 +95,7 @@ async def all_games(ctx):
 @bot.command(name="deletegame")
 async def delete_game(ctx, game=None):
 
-    spread = client.open(str(ctx.guild.id0)
+    spread = client.open(str(ctx.guild.id))
 
     sheets = spread.worksheets()
 
