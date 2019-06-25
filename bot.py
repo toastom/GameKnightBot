@@ -33,7 +33,7 @@ async def on_ready():
 
 @bot.command(name="addgame")
 async def add_game(ctx, game):
-    spread = client.open(ctx.guild.id) #Change to server name later
+    spread = client.open(ctx.guild.id)
     try:
         spread.add_worksheet(title=str(game), rows="1000", cols="26")
         sheet = spread.worksheet(game)
@@ -51,7 +51,7 @@ async def add_game(ctx, game):
 
 @bot.command(name="allgames")
 async def all_games(ctx):
-    spread = client.open(ctx.guild.id) #Change to server name later
+    spread = client.open(ctx.guild.id)
     sheets = spread.worksheets()
     print(sheets)
 
