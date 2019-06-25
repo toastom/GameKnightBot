@@ -33,7 +33,7 @@ async def on_ready():
 
 @bot.command(name="addgame")
 async def add_game(ctx, game):
-    spread = client.open("Testing") #Change to server name later
+    spread = client.open(ctx.guild.id) #Change to server name later
     try:
         spread.add_worksheet(title=str(game), rows="1000", cols="26")
         sheet = spread.worksheet(game)
@@ -51,7 +51,7 @@ async def add_game(ctx, game):
 
 @bot.command(name="allgames")
 async def all_games(ctx):
-    spread = client.open("Testing") #Change to server name later
+    spread = client.open(ctx.guild.id) #Change to server name later
     sheets = spread.worksheets()
     print(sheets)
 
@@ -65,7 +65,7 @@ async def all_games(ctx):
 
 @bot.command(name="deletegame")
 async def delete_game(ctx, game=None):
-    spread = client.open("Testing")
+    spread = client.open(ctx.guild.id)
     sheets = spread.worksheets()
 
     for i in sheets:
@@ -112,7 +112,7 @@ async def schedule(ctx, game="", date="", time="", name=""):
     Searches for each individual element in the specified game,
     if it doesn't exist, create it
     """
-    spread = client.open("Testing") #Change to server name later
+    spread = client.open(ctx.guild.id)
     try:
         sheet = spread.worksheet(game)
 
@@ -131,7 +131,7 @@ async def schedule(ctx, game="", date="", time="", name=""):
 
     except gspread.exceptions.APIError:
         await ctx.message.channel.send("Game does not exist. Make sure arguments are in Game, Date, Time order and try again.\n\
-        if that doesn't work, see the addgame command")
+        If that doesn't work, see the addgame command.")
 
 
 
