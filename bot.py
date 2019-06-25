@@ -48,7 +48,7 @@ async def on_guild_join(guild):
         spreadsheet.share('gameknightbot@gmail.com', perm_type='user', role='writer')
         general = find(lambda x: x.name == 'general', guild.text_channels)
         if general and general.permissions_for(guild.me).send_messages:
-                await general.send('Hello a Spreadsheet with the name `{}` has been created for your server'.format(str(guild.name)))
+                await general.send('Hello a Spreadsheet with the name `{}` has been created for your server'.format(str(guild.id)))
     except gspread.exceptions.APIError:
         general = find(lambda x: x.name == 'general', guild.text_channels)
         if general and general.permissions_for(guild.me).send_messages:
