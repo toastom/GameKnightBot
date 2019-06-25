@@ -133,7 +133,7 @@ async def schedule(ctx, game="", date="", time="", name=""):
         if that doesn't work, see the addgame command")     
 
 @bot.command(name="join")
-async def schedule(ctx, eventname=""):
+async def join(ctx, game="", eventname=""):
     spread = client.open("Testing")
     try:
         sheet = spread.worksheet(game)
