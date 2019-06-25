@@ -62,6 +62,12 @@ async def add_game(ctx, game):
     spread = client.open(ctx.guild.id)
     try:
         spread.add_worksheet(title=str(game), rows="1000", cols="26")
+        sheet = spread.worksheet(game)
+
+        sheet.update_cell(1, 1, "Player Name")
+        sheet.update_cell(1, 2, "Date")
+        sheet.update_cell(1, 3, "Time")
+        sheet.update_cell(1, 4, "Name")
     except gspread.exceptions.APIError:
         print("A(n) {} error occurred trying to add a game.".format(sys.exc_info()[0]))
         await ctx.message.channel.send("Game is already added. :confused:")
@@ -72,7 +78,8 @@ async def add_game(ctx, game):
 @bot.command(name="allgames")
 async def all_games(ctx):
 
-    spread = client.open(ctx.guild.id)
+    spread = client.open(str(ctx.guild.id))
+
 
     sheets = spread.worksheets()
     print(sheets)
@@ -88,7 +95,7 @@ async def all_games(ctx):
 @bot.command(name="deletegame")
 async def delete_game(ctx, game=None):
 
-    spread = client.open(ctx.guild.id)
+    spread = client.open(str(ctx.guild.id0)
 
     sheets = spread.worksheets()
 
@@ -101,6 +108,72 @@ async def delete_game(ctx, game=None):
             return
     
     await ctx.message.channel.send("Game {} successfully deleted.".format(str(game)))
+
+
+@bot.command(name="schedule")
+async def schedule(ctx, game="", date="", time="", name=""):
+    #Check if the command was called from someone with a "Gamemaster" role
+    server_roles = ctx.message.guild.roles
+    gamemaster = None
+    
+    for i in server_roles:
+        if(i.name == "Gamemaster"): #If there is a role called "Gamemaster"
+            gamemaster = i #Get the gamemaster role
+            print("Gamemaster role available.")
+    
+    if(gamemaster == None): #If "Gamemaster" role was not found
+        await ctx.message.channel.send('No role titled "Gamemaster". Contact server staff to make this role (case-sensitive).')
+        return
+       
+    #If the message author is in the list of people that have the "Gamemaster" role
+    if(ctx.message.author in gamemaster.members):
+        #Let them schedule the event
+        print("Able to schedule.")
+    else:
+        await ctx.message.channel.send('Only those with the "Gamemaster" role can schedule game nights.')
+        return
+
+    #After all that permissions checking, time to catch incomplete information!
+    #Game, date and time are absolutely mandatory, while name is optional
+    if(game == "" or date == "" or time == ""):
+        await ctx.message.channel.send("Missing information required for scheduling. See help command for details.")
+        return
+
+    """
+    Can finally start the actual scheduling code. Yay.
+    Searches for each individual element in the specified game,
+    if it doesn't exist, create it
+    """
+    spread = client.open(ctx.guild.id)
+    try:
+        sheet = spread.worksheet(game)
+
+        cell = sheet.find("Date")
+        for i in range(cell.row, sheet.row_count): #Looping through all the rows
+            cell = sheet.cell(i, cell.col)
+            if(cell.value == ""): #Get the first cell in that column that's blank
+                sheet.update_cell(i, cell.col, date)
+                time_cell = sheet.update_cell(i, cell.col + 1, time)
+
+                if(name != ""):
+                    name_cell = sheet.update_cell(i, cell.col + 3, name)
+                
+                await ctx.message.channel.send(":white_check_mark: Scheduled game night successfully.")
+                return
+
+    except gspread.exceptions.APIError:
+        await ctx.message.channel.send("Game does not exist. Make sure arguments are in Game, Date, Time order and try again.\n\
+        If that doesn't work, see the addgame command.")
+
+
+
+
+
+
+
+
+
+
 
 
 bot.run(TOKEN)
