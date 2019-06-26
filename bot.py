@@ -24,11 +24,11 @@ def check_default_alias(game):
     with open("default_aliases.json", "r") as j:
         default_aliases = j.read()
     aliases = json.loads(default_aliases)
-    print(aliases)
+    #print(aliases)
 
     lower_game = game.lower()
     for i in aliases.items():
-        print(i[0], i[1]) #i is a list of tuples, first is key, second is list of that key's values
+        #print(i[0], i[1]) #i is a list of tuples, first is key, second is list of that key's values
         if(lower_game in i[1]): #If game is one of the aliases for games
             game = i[0] #Set game to the proper game
 
@@ -96,7 +96,7 @@ async def add_game(ctx, *, game):
         await ctx.message.channel.send("Game is already added. :confused:")
         return
 
-    await ctx.message.channel.send("New game {} added".format(str(game)))
+    await ctx.message.channel.send(":white_check_mark: New game {} added".format(str(game)))
 
 @bot.command(name="allgames")
 async def all_games(ctx):
@@ -116,19 +116,20 @@ async def all_games(ctx):
 
 @bot.command(name="deletegame")
 async def delete_game(ctx, *, game=None):
-    check_default_alias(game)
+    game = check_default_alias(game)
 
     spread = client.open(str(ctx.guild.id))
     sheets = spread.worksheets()
 
+    game = game.lower()
     for i in sheets:
         print(str(game), i.title)
-        if(str(game) == i.title):
+        if(str(game) == i.title.lower()):
             spread.del_worksheet(i)
         elif(game == None):
             await ctx.message.channel.send(":fire: Must input a game to delete. :fire:")
             return
-    
+    game = game.capitalize()
     await ctx.message.channel.send("Game {} successfully deleted.".format(str(game)))
 
 
@@ -160,34 +161,98 @@ async def schedule(ctx, game="", date="", time="", name=""):
     if(game == "" or date == "" or time == ""):
         await ctx.message.channel.send("Missing information required for scheduling. See help command for details.")
         return
+    
+    spread = client.open(str(ctx.guild.id))
+    sheet = spread.worksheet(game)
+    
+    #var_date = "6/26/19"
+    #var_time = "11:00AM"
+
+    var_date = None
+    var_time = None
+
+    print(str(sheet.cell(2, 2)), str(sheet.cell(2, 3)))
+    try:
+        #Try to find others cell with the same data
+        var_date = sheet.find(str(date))
+        var_time = sheet.find(str(time))
+
+        if(date == var_date.value):
+            print("Date has been found.")
+            if(time == var_time.value):
+                print("Time has been found.")
+                await ctx.message.channel.send("That event is already scheduled for that game.")
+                return
+    #No other cells are found
+    except gspread.exceptions.CellNotFound:
+        print("No dupes found. Proceed to scheduling event.")
+
+
+
+    #If we don't find either the same date or time, run like normal
+    print(sys.exc_info()[0])
+
 
     """
     Can finally start the actual scheduling code. Yay.
     Searches for each individual element in the specified game,
     if it doesn't exist, create it
     """
-    spread = client.open(str(ctx.guild.id))
+    #spread = client.open(str(ctx.guild.id))
     try:
-        sheet = spread.worksheet(game)
+        game = check_default_alias(game)
+        #sheet = spread.worksheet(game)
 
-        cell = sheet.find("Date")
-        for i in range(cell.row, sheet.row_count): #Looping through all the rows
-            cell = sheet.cell(i, cell.col)
-            if(cell.value == ""): #Get the first cell in that column that's blank
-                sheet.update_cell(i, cell.col, date)
-                time_cell = sheet.update_cell(i, cell.col + 1, time)
+        date_cell = sheet.find("Date")
+        time_cell = sheet.find("Time")
+        print(date_cell, time_cell)
+
+        cells_changed = []
+        
+        for i in range(date_cell.row, sheet.row_count): #Looping through all the rows, i is an int
+            cell = sheet.cell(i, date_cell.col)
+            print(str(cell))
+
+            if(cell.value == ""): #Get the first cell in the date column that's blank
+                #Update cells with Date and Time
+                #sheet.update_cell(i, cell.col, date, "UNFORMATTED_VALUE")
+                #sheet.update_cell(i, cell.col + 1, time, "UNFORMATTED_VALUE")
+                cells_changed.append([(i, cell.col), (i, time_cell.col)])
+                print("\n{}".format("cells_changed: {}".format(cells_changed)))
+
 
                 if(name != ""):
                     name_cell = sheet.find("Name")
-                    name_cell = sheet.update_cell(i, name_cell.col, name)
+                    #name_cell = sheet.update_cell(i, name_cell.col, name, "UNFORMATTED_VALUE")
+                    cells_changed.append((i, name_cell.col))
+                    print("\n{}".format(cells_changed))
                 
+                cells = []
+                for pair, value in cells_changed: #pair is a list of tuples (row, col). I need to get (row, col).
+                    print(pair[0])
+
+                    new_cell = gspread.Cell(pair[0], pair[1])
+                    new_cell.value = str(date)
+                    cells.append(new_cell)
+
+                    new_cell = gspread.Cell(value[0], value[1])
+                    new_cell.value = str(time)
+                    cells.append(new_cell)
+
+                    print(type(pair))
+                    print("Pair: {}, Value: ".format(pair))
+                    print("Cells: {}".format(cells))
+
+                sheet.update_cells(cells, "RAW")
                 await ctx.message.channel.send(":white_check_mark: Scheduled game night successfully.")
                 return
     except gspread.exceptions.WorksheetNotFound:
         await ctx.message.channel.send("Game does not exist. Make sure arguments are in Game, Date, Time order and try again. If that doesn't work, see the addgame command.")
+    """
     except:
+        print("Error {} when scheduling event.".format(sys.exc_info()[0]))
         await ctx.message.channel.send("There was an error scheduling a game night. Make sure arguments are in Game, Date, Time order and try again. If that doesn't work, see the help command.")
-
+    """
 
 
 
