@@ -1,5 +1,4 @@
-
-import os, discord, random, sys
+import os, discord, random, sys, json
 
 from discord.ext import commands
 from discord.utils import find
@@ -19,6 +18,31 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
         "https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
 client: Client = gspread.authorize(creds)
+
+
+def check_default_alias(game):
+    with open("default_aliases.json", "r") as j:
+        default_aliases = j.read()
+    aliases = json.loads(default_aliases)
+    #print(aliases)
+
+    if(game):   lower_game = game.lower()
+    else:   return
+
+    for i in aliases.items():
+        #print(i[0], i[1]) #i is a list of tuples, first is key, second is list of that key's values
+        if(lower_game in i[1]): #If game is one of the aliases for games
+            game = i[0] #Set game to the proper game
+
+    game = list(game)
+    for i in range(0, len(game)):
+        if(game[i - 1] == " "):
+            game[i] = game[i].upper()
+    game = str().join(game)
+    game = game.capitalize()
+    print(game)
+    return game
+
 
 @bot.event
 async def on_ready():
@@ -52,14 +76,13 @@ async def on_guild_join(guild):
     except gspread.exceptions.APIError:
         general = find(lambda x: x.name == 'general', guild.text_channels)
         if general and general.permissions_for(guild.me).send_messages:
-            await general.send('Hello a Spreadsheet with the name `{}` couldnt be created')
-
-
+            await general.send('Hello a Spreadsheet with the name `{}` couldn\'t be created')
 
 
 @bot.command(name="addgame")
-async def add_game(ctx, game):
-    spread = client.open(str(ctx.guild.id)) #Change to server name later
+async def add_game(ctx, *, game):
+    game = check_default_alias(game)
+    spread = client.open(str(ctx.guild.id))
     try:
         spread.add_worksheet(title=str(game), rows="1000", cols="26")
         sheet = spread.worksheet(game)
@@ -67,6 +90,7 @@ async def add_game(ctx, game):
         sheet.update_cell(1, 1, "Player Name")
         sheet.update_cell(1, 2, "Date")
         sheet.update_cell(1, 3, "Time")
+        sheet.update_cell(1, 4, "Num Attending")
         sheet.update_cell(1, 4, "Name")
         sheet.update_cell(1, 6, "Num Players")
         sheet.update_cell(2, 6, 0)
@@ -75,7 +99,7 @@ async def add_game(ctx, game):
         await ctx.message.channel.send("Game is already added. :confused:")
         return
 
-    await ctx.message.channel.send("New game {} added".format(str(game)))
+    await ctx.message.channel.send(":white_check_mark: New game {} added".format(str(game)))
 
 @bot.command(name="allgames")
 async def all_games(ctx):
@@ -93,19 +117,26 @@ async def all_games(ctx):
     await ctx.message.channel.send("All added games for this server: \n{}".format(game_list))
 
 @bot.command(name="deletegame")
-async def delete_game(ctx, game=None):
+async def delete_game(ctx, *, game=None):
+    game = check_default_alias(game)
     spread = client.open(str(ctx.guild.id))
     sheets = spread.worksheets()
 
+    if(game):   game = game.lower()
+
     for i in sheets:
         print(str(game), i.title)
-        if(str(game) == i.title):
+        if(str(game) == i.title.lower()):
             spread.del_worksheet(i)
-        elif(game == None):
-            await ctx.message.channel.send(":fire: Must input a game to delete. :fire:")
+            game = game.capitalize()
+            await ctx.message.channel.send("Game {} successfully deleted.".format(str(game)))
             return
-    
-    await ctx.message.channel.send("Game {} successfully deleted.".format(str(game)))
+        elif(game == None):
+            await ctx.message.channel.send(":x: Must input a game to delete.")
+            return
+    else: #When the loop ends and we haven't returned out of the other things, then we haven't found the game.
+        await ctx.message.channel.send(":x: Game {} does not exist.".format(str(game)))
+        return
 
 
 @bot.command(name="schedule")
@@ -136,31 +167,78 @@ async def schedule(ctx, game="", date="", time="", name=""):
     if(game == "" or date == "" or time == ""):
         await ctx.message.channel.send("Missing information required for scheduling. See help command for details.")
         return
+    
+    game = check_default_alias(game)
+    spread = client.open(str(ctx.guild.id))
+    sheet = spread.worksheet(game)
+
+    var_date = None
+    var_time = None
+
+    print(str(sheet.cell(2, 2)), str(sheet.cell(2, 3)))
+    try:
+        #Try to find others cell with the same data
+        var_date = sheet.find(str(date))
+        var_time = sheet.find(str(time))
+
+        if(date == var_date.value):
+            print("Date has been found.")
+            if(time == var_time.value):
+                print("Time has been found.")
+                await ctx.message.channel.send("That event is already scheduled for that game.")
+                return
+    #No other cells are found
+    except gspread.exceptions.CellNotFound:
+        print("No dupes found. Proceed to scheduling event.")
+        
+    print(sys.exc_info()[0])
 
     """
     Can finally start the actual scheduling code. Yay.
     Searches for each individual element in the specified game,
     if it doesn't exist, create it
     """
-    spread = client.open(str(ctx.guild.id))
     try:
-        sheet = spread.worksheet(game)
+        date_cell = sheet.find("Date")
+        time_cell = sheet.find("Time")
+        print(date_cell, time_cell)
 
-        cell = sheet.find("Date")
-        for i in range(cell.row, sheet.row_count): #Looping through all the rows
-            cell = sheet.cell(i, cell.col)
-            if(cell.value == ""): #Get the first cell in that column that's blank
-                sheet.update_cell(i, cell.col, date)
-                time_cell = sheet.update_cell(i, cell.col + 1, time)
+        cells_changed = []
+        
+        for i in range(date_cell.row, sheet.row_count): #Looping through all the rows, i is an int
+            cell = sheet.cell(i, date_cell.col)
+            print(str(cell))
+
+            if(cell.value == ""): #Get the first cell in the date column that's blank
+                #Update cells with Date and Time
+                cells_changed.append([(i, cell.col), (i, time_cell.col)])
+                print("\n{}".format("cells_changed: {}".format(cells_changed)))
+
 
                 if(name != ""):
-                    name_cell = sheet.update_cell(i, cell.col + 2, name)
+                    name_cell = sheet.find("Name")
+                    cells_changed.append((i, name_cell.col))
+                    print("\n{}".format(cells_changed))
                 
+                cells = []
+                for pair, value in cells_changed:
+                    new_cell = gspread.Cell(pair[0], pair[1])
+                    new_cell.value = str(date)
+                    cells.append(new_cell)
+
+                    new_cell = gspread.Cell(value[0], value[1])
+                    new_cell.value = str(time)
+                    cells.append(new_cell)
+
+                    print(type(pair))
+                    print("Pair: {}, Value: ".format(pair))
+                    print("Cells: {}".format(cells))
+
+                sheet.update_cells(cells, "RAW")
                 await ctx.message.channel.send(":white_check_mark: Scheduled game night successfully.")
                 return
-    except gspread.exceptions.APIError:
-        await ctx.message.channel.send("Game does not exist. Make sure arguments are in Game, Date, Time order and try again.\n\
-        if that doesn't work, see the addgame command")     
+    except gspread.exceptions.WorksheetNotFound:
+        await ctx.message.channel.send("Game does not exist. Make sure arguments are in Game, Date, Time order and try again. If that doesn't work, see the addgame command.")     
 
 @bot.command(name="join")
 async def join(ctx, game="", eventname=""):
@@ -187,7 +265,7 @@ async def join(ctx, game="", eventname=""):
         return
     except gspread.exceptions.APIError:
         await ctx.message.channel.send("Event does not exist. Make sure Event Name is valid.")
-
+    
 
 
 
