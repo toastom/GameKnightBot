@@ -26,7 +26,9 @@ def check_default_alias(game):
     aliases = json.loads(default_aliases)
     #print(aliases)
 
-    lower_game = game.lower()
+    if(game):   lower_game = game.lower()
+    else:   return
+
     for i in aliases.items():
         #print(i[0], i[1]) #i is a list of tuples, first is key, second is list of that key's values
         if(lower_game in i[1]): #If game is one of the aliases for games
@@ -121,16 +123,21 @@ async def delete_game(ctx, *, game=None):
     spread = client.open(str(ctx.guild.id))
     sheets = spread.worksheets()
 
-    game = game.lower()
+    if(game):   game = game.lower()
+
     for i in sheets:
         print(str(game), i.title)
         if(str(game) == i.title.lower()):
             spread.del_worksheet(i)
-        elif(game == None):
-            await ctx.message.channel.send(":fire: Must input a game to delete. :fire:")
+            game = game.capitalize()
+            await ctx.message.channel.send("Game {} successfully deleted.".format(str(game)))
             return
-    game = game.capitalize()
-    await ctx.message.channel.send("Game {} successfully deleted.".format(str(game)))
+        elif(game == None):
+            await ctx.message.channel.send(":x: Must input a game to delete.")
+            return
+    else: #When the loop ends and we haven't returned out of the other things, then we haven't found the game.
+        await ctx.message.channel.send(":x: Game {} does not exist.".format(str(game)))
+        return
 
 
 @bot.command(name="schedule")
@@ -162,11 +169,9 @@ async def schedule(ctx, game="", date="", time="", name=""):
         await ctx.message.channel.send("Missing information required for scheduling. See help command for details.")
         return
     
+    game = check_default_alias(game)
     spread = client.open(str(ctx.guild.id))
     sheet = spread.worksheet(game)
-    
-    #var_date = "6/26/19"
-    #var_time = "11:00AM"
 
     var_date = None
     var_time = None
@@ -186,23 +191,15 @@ async def schedule(ctx, game="", date="", time="", name=""):
     #No other cells are found
     except gspread.exceptions.CellNotFound:
         print("No dupes found. Proceed to scheduling event.")
-
-
-
-    #If we don't find either the same date or time, run like normal
+        
     print(sys.exc_info()[0])
-
 
     """
     Can finally start the actual scheduling code. Yay.
     Searches for each individual element in the specified game,
     if it doesn't exist, create it
     """
-    #spread = client.open(str(ctx.guild.id))
     try:
-        game = check_default_alias(game)
-        #sheet = spread.worksheet(game)
-
         date_cell = sheet.find("Date")
         time_cell = sheet.find("Time")
         print(date_cell, time_cell)
@@ -248,12 +245,6 @@ async def schedule(ctx, game="", date="", time="", name=""):
                 return
     except gspread.exceptions.WorksheetNotFound:
         await ctx.message.channel.send("Game does not exist. Make sure arguments are in Game, Date, Time order and try again. If that doesn't work, see the addgame command.")
-    """
-    except:
-        print("Error {} when scheduling event.".format(sys.exc_info()[0]))
-        await ctx.message.channel.send("There was an error scheduling a game night. Make sure arguments are in Game, Date, Time order and try again. If that doesn't work, see the help command.")
-    """
-
 
 
 
