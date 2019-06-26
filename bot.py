@@ -29,12 +29,33 @@ async def on_ready():
     print(bot.user.name)
     print(bot.user.id)
     print('------')
-    print('Owners: Kirbae#0001, tom233145#0069, pinkpi#0001, hamdi#0001')
-    print('------')
     servers = list(bot.guilds)
     print('Connected on '+ str(len(servers)) + ' servers:')
     print('\n'.join('>'+ server.name for server in servers))
     print('------')
+
+
+@bot.event
+async def on_guild_join(guild):
+    spreadsheet = {
+        'properties': {
+            'title': guild.name,
+            'developerMetadata': guild.id
+        }
+    }
+    try:
+        spreadsheet = client.create(str(guild.id))
+        spreadsheet.share('gameknightbot@gmail.com', perm_type='user', role='writer')
+        general = find(lambda x: x.name == 'general', guild.text_channels)
+        if general and general.permissions_for(guild.me).send_messages:
+                await general.send('Hello a Spreadsheet with the name `{}` has been created for your server'.format(str(guild.id)))
+    except gspread.exceptions.APIError:
+        general = find(lambda x: x.name == 'general', guild.text_channels)
+        if general and general.permissions_for(guild.me).send_messages:
+            await general.send('Hello a Spreadsheet with the name `{}` couldnt be created')
+
+
+
 
 @bot.command(name="addgame")
 async def add_game(ctx, game):
@@ -58,7 +79,8 @@ async def add_game(ctx, game):
 
 @bot.command(name="allgames")
 async def all_games(ctx):
-    spread = client.open(str(ctx.guild.id)) #Change to server name later
+    spread = client.open(str(ctx.guild.id))
+
     sheets = spread.worksheets()
     print(sheets)
 
@@ -84,6 +106,7 @@ async def delete_game(ctx, game=None):
             return
     
     await ctx.message.channel.send("Game {} successfully deleted.".format(str(game)))
+
 
 @bot.command(name="schedule")
 async def schedule(ctx, game="", date="", time="", name=""):
@@ -119,7 +142,7 @@ async def schedule(ctx, game="", date="", time="", name=""):
     Searches for each individual element in the specified game,
     if it doesn't exist, create it
     """
-    spread = client.open(str(ctx.guild.id)) #Change to server name later
+    spread = client.open(str(ctx.guild.id))
     try:
         sheet = spread.worksheet(game)
 
@@ -131,7 +154,7 @@ async def schedule(ctx, game="", date="", time="", name=""):
                 time_cell = sheet.update_cell(i, cell.col + 1, time)
 
                 if(name != ""):
-                    name_cell = sheet.update_cell(i, cell.col + 3, name)
+                    name_cell = sheet.update_cell(i, cell.col + 2, name)
                 
                 await ctx.message.channel.send(":white_check_mark: Scheduled game night successfully.")
                 return
@@ -176,3 +199,4 @@ async def join(ctx, game="", eventname=""):
 
 
 bot.run(TOKEN)
+
