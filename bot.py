@@ -68,7 +68,7 @@ async def on_guild_join(guild):
         }
     }
     try:
-        spreadsheet = client.create(guild.id)
+        spreadsheet = client.create(str(guild.id))
         spreadsheet.share('gameknightbot@gmail.com', perm_type='user', role='writer')
         general = find(lambda x: x.name == 'general', guild.text_channels)
         if general and general.permissions_for(guild.me).send_messages:
@@ -82,7 +82,6 @@ async def on_guild_join(guild):
 @bot.command(name="addgame")
 async def add_game(ctx, *, game):
     game = check_default_alias(game)
-
     spread = client.open(str(ctx.guild.id))
     try:
         spread.add_worksheet(title=str(game), rows="1000", cols="26")
@@ -93,6 +92,8 @@ async def add_game(ctx, *, game):
         sheet.update_cell(1, 3, "Time")
         sheet.update_cell(1, 4, "Num Attending")
         sheet.update_cell(1, 4, "Name")
+        sheet.update_cell(1, 6, "Num Players")
+        sheet.update_cell(2, 6, 0)
     except gspread.exceptions.APIError:
         print("A(n) {} error occurred trying to add a game.".format(sys.exc_info()[0]))
         await ctx.message.channel.send("Game is already added. :confused:")
@@ -102,7 +103,6 @@ async def add_game(ctx, *, game):
 
 @bot.command(name="allgames")
 async def all_games(ctx):
-
     spread = client.open(str(ctx.guild.id))
 
     sheets = spread.worksheets()
@@ -119,7 +119,6 @@ async def all_games(ctx):
 @bot.command(name="deletegame")
 async def delete_game(ctx, *, game=None):
     game = check_default_alias(game)
-
     spread = client.open(str(ctx.guild.id))
     sheets = spread.worksheets()
 
@@ -212,22 +211,17 @@ async def schedule(ctx, game="", date="", time="", name=""):
 
             if(cell.value == ""): #Get the first cell in the date column that's blank
                 #Update cells with Date and Time
-                #sheet.update_cell(i, cell.col, date, "UNFORMATTED_VALUE")
-                #sheet.update_cell(i, cell.col + 1, time, "UNFORMATTED_VALUE")
                 cells_changed.append([(i, cell.col), (i, time_cell.col)])
                 print("\n{}".format("cells_changed: {}".format(cells_changed)))
 
 
                 if(name != ""):
                     name_cell = sheet.find("Name")
-                    #name_cell = sheet.update_cell(i, name_cell.col, name, "UNFORMATTED_VALUE")
                     cells_changed.append((i, name_cell.col))
                     print("\n{}".format(cells_changed))
                 
                 cells = []
-                for pair, value in cells_changed: #pair is a list of tuples (row, col). I need to get (row, col).
-                    print(pair[0])
-
+                for pair, value in cells_changed:
                     new_cell = gspread.Cell(pair[0], pair[1])
                     new_cell.value = str(date)
                     cells.append(new_cell)
@@ -244,7 +238,34 @@ async def schedule(ctx, game="", date="", time="", name=""):
                 await ctx.message.channel.send(":white_check_mark: Scheduled game night successfully.")
                 return
     except gspread.exceptions.WorksheetNotFound:
-        await ctx.message.channel.send("Game does not exist. Make sure arguments are in Game, Date, Time order and try again. If that doesn't work, see the addgame command.")
+        await ctx.message.channel.send("Game does not exist. Make sure arguments are in Game, Date, Time order and try again. If that doesn't work, see the addgame command.")     
+
+@bot.command(name="join")
+async def join(ctx, game="", eventname=""):
+    spread = client.open(str(ctx.guild.id))
+    sheet = spread.worksheet(game)
+    if(game == "" or eventname == ""):
+        await ctx.message.channel.send("Missing information required for joining. See help command for details.")
+        return
+    for i in range(1, spread.worksheet(game).row_count): #Looping through all the rows
+            if(sheet.cell(i,1).value == str(ctx.message.author.name)+"#"+str(ctx.message.author.discriminator)): #Get the first cell in that column that's blank
+
+                await ctx.message.channel.send("You're already signed up for this event :confused:")
+                return
+            if(sheet.cell(i,1).value == ""): #Get the first cell in that column that's blank
+            
+                break
+    try:
+        numplayers = sheet.cell((sheet.find("Num Players").row)+1, (sheet.find("Num Players").col)).value
+
+        eventCellRow = sheet.find(eventname)
+        sheet.update_cell(eventCellRow.row+int(numplayers), 1, str(ctx.message.author.name)+"#"+str(ctx.message.author.discriminator))
+        sheet.update_cell((sheet.find("Num Players").row)+1,(sheet.find("Num Players").col),int(numplayers)+1)
+        await ctx.message.channel.send(":white_check_mark: Joined game night successfully.")
+        return
+    except gspread.exceptions.APIError:
+        await ctx.message.channel.send("Event does not exist. Make sure Event Name is valid.")
+    
 
 
 
