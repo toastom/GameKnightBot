@@ -142,12 +142,23 @@ async def schedule(ctx, game="", date="", time="", name=""):
 @bot.command(name="join")
 async def join(ctx, game="", eventname=""):
     spread = client.open(str(ctx.guild.id))
+    sheet = spread.worksheet(game)
+    if(game == "" or eventname == ""):
+        await ctx.message.channel.send("Missing information required for joining. See help command for details.")
+        return
+    for i in range(1, spread.worksheet(game).row_count): #Looping through all the rows
+            if(sheet.cell(i,1).value == str(ctx.message.author.name)+"#"+str(ctx.message.author.discriminator)): #Get the first cell in that column that's blank
+
+                await ctx.message.channel.send("You're already signed up for this event :confused:")
+                return
+            if(sheet.cell(i,1).value == ""): #Get the first cell in that column that's blank
+            
+                break
     try:
-        sheet = spread.worksheet(game)
         numplayers = sheet.cell((sheet.find("Num Players").row)+1, (sheet.find("Num Players").col)).value
 
         eventCellRow = sheet.find(eventname)
-        sheet.update_cell(eventCellRow.row+int(numplayers), 1, str(ctx.message.author.id))
+        sheet.update_cell(eventCellRow.row+int(numplayers), 1, str(ctx.message.author.name)+"#"+str(ctx.message.author.discriminator))
         sheet.update_cell((sheet.find("Num Players").row)+1,(sheet.find("Num Players").col),int(numplayers)+1)
         await ctx.message.channel.send(":white_check_mark: Joined game night successfully.")
         return
