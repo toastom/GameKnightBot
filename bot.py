@@ -59,7 +59,7 @@ async def on_guild_join(guild):
 
 @bot.command(name="addgame")
 async def add_game(ctx, game):
-    spread = client.open(str(ctx.guild.id))
+    spread = client.open(str(ctx.guild.id)) #Change to server name later
     try:
         spread.add_worksheet(title=str(game), rows="1000", cols="26")
         sheet = spread.worksheet(game)
@@ -68,6 +68,8 @@ async def add_game(ctx, game):
         sheet.update_cell(1, 2, "Date")
         sheet.update_cell(1, 3, "Time")
         sheet.update_cell(1, 4, "Name")
+        sheet.update_cell(1, 6, "Num Players")
+        sheet.update_cell(2, 6, 0)
     except gspread.exceptions.APIError:
         print("A(n) {} error occurred trying to add a game.".format(sys.exc_info()[0]))
         await ctx.message.channel.send("Game is already added. :confused:")
@@ -77,9 +79,7 @@ async def add_game(ctx, game):
 
 @bot.command(name="allgames")
 async def all_games(ctx):
-
     spread = client.open(str(ctx.guild.id))
-
 
     sheets = spread.worksheets()
     print(sheets)
@@ -94,9 +94,7 @@ async def all_games(ctx):
 
 @bot.command(name="deletegame")
 async def delete_game(ctx, game=None):
-
     spread = client.open(str(ctx.guild.id))
-
     sheets = spread.worksheets()
 
     for i in sheets:
@@ -160,11 +158,35 @@ async def schedule(ctx, game="", date="", time="", name=""):
                 
                 await ctx.message.channel.send(":white_check_mark: Scheduled game night successfully.")
                 return
-
     except gspread.exceptions.APIError:
         await ctx.message.channel.send("Game does not exist. Make sure arguments are in Game, Date, Time order and try again.\n\
-        If that doesn't work, see the addgame command.")
+        if that doesn't work, see the addgame command")     
 
+@bot.command(name="join")
+async def join(ctx, game="", eventname=""):
+    spread = client.open(str(ctx.guild.id))
+    sheet = spread.worksheet(game)
+    if(game == "" or eventname == ""):
+        await ctx.message.channel.send("Missing information required for joining. See help command for details.")
+        return
+    for i in range(1, spread.worksheet(game).row_count): #Looping through all the rows
+            if(sheet.cell(i,1).value == str(ctx.message.author.name)+"#"+str(ctx.message.author.discriminator)): #Get the first cell in that column that's blank
+
+                await ctx.message.channel.send("You're already signed up for this event :confused:")
+                return
+            if(sheet.cell(i,1).value == ""): #Get the first cell in that column that's blank
+            
+                break
+    try:
+        numplayers = sheet.cell((sheet.find("Num Players").row)+1, (sheet.find("Num Players").col)).value
+
+        eventCellRow = sheet.find(eventname)
+        sheet.update_cell(eventCellRow.row+int(numplayers), 1, str(ctx.message.author.name)+"#"+str(ctx.message.author.discriminator))
+        sheet.update_cell((sheet.find("Num Players").row)+1,(sheet.find("Num Players").col),int(numplayers)+1)
+        await ctx.message.channel.send(":white_check_mark: Joined game night successfully.")
+        return
+    except gspread.exceptions.APIError:
+        await ctx.message.channel.send("Event does not exist. Make sure Event Name is valid.")
 
 
 
