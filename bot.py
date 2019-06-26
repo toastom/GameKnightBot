@@ -1,5 +1,4 @@
-
-import os, discord, random, sys
+import os, discord, random, sys, json
 
 from discord.ext import commands
 from discord.utils import find
@@ -19,6 +18,29 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
         "https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
 client: Client = gspread.authorize(creds)
+
+
+def check_default_alias(game):
+    with open("default_aliases.json", "r") as j:
+        default_aliases = j.read()
+    aliases = json.loads(default_aliases)
+    print(aliases)
+
+    lower_game = game.lower()
+    for i in aliases.items():
+        print(i[0], i[1]) #i is a list of tuples, first is key, second is list of that key's values
+        if(lower_game in i[1]): #If game is one of the aliases for games
+            game = i[0] #Set game to the proper game
+
+    game = list(game)
+    for i in range(0, len(game)):
+        if(game[i - 1] == " "):
+            game[i] = game[i].upper()
+    game = str().join(game)
+    game = game.capitalize()
+    print(game)
+    return game
+
 
 @bot.event
 async def on_ready():
@@ -52,14 +74,14 @@ async def on_guild_join(guild):
     except gspread.exceptions.APIError:
         general = find(lambda x: x.name == 'general', guild.text_channels)
         if general and general.permissions_for(guild.me).send_messages:
-            await general.send('Hello a Spreadsheet with the name `{}` couldnt be created')
-
-
+            await general.send('Hello a Spreadsheet with the name `{}` couldn\'t be created')
 
 
 @bot.command(name="addgame")
-async def add_game(ctx, game):
-    spread = client.open(ctx.guild.id)
+async def add_game(ctx, *, game):
+    game = check_default_alias(game)
+
+    spread = client.open(str(ctx.guild.id))
     try:
         spread.add_worksheet(title=str(game), rows="1000", cols="26")
         sheet = spread.worksheet(game)
@@ -67,6 +89,7 @@ async def add_game(ctx, game):
         sheet.update_cell(1, 1, "Player Name")
         sheet.update_cell(1, 2, "Date")
         sheet.update_cell(1, 3, "Time")
+        sheet.update_cell(1, 4, "Num Attending")
         sheet.update_cell(1, 4, "Name")
     except gspread.exceptions.APIError:
         print("A(n) {} error occurred trying to add a game.".format(sys.exc_info()[0]))
@@ -80,7 +103,6 @@ async def all_games(ctx):
 
     spread = client.open(str(ctx.guild.id))
 
-
     sheets = spread.worksheets()
     print(sheets)
 
@@ -93,10 +115,10 @@ async def all_games(ctx):
     await ctx.message.channel.send("All added games for this server: \n{}".format(game_list))
 
 @bot.command(name="deletegame")
-async def delete_game(ctx, game=None):
+async def delete_game(ctx, *, game=None):
+    check_default_alias(game)
 
     spread = client.open(str(ctx.guild.id))
-
     sheets = spread.worksheets()
 
     for i in sheets:
@@ -144,7 +166,7 @@ async def schedule(ctx, game="", date="", time="", name=""):
     Searches for each individual element in the specified game,
     if it doesn't exist, create it
     """
-    spread = client.open(ctx.guild.id)
+    spread = client.open(str(ctx.guild.id))
     try:
         sheet = spread.worksheet(game)
 
@@ -156,14 +178,15 @@ async def schedule(ctx, game="", date="", time="", name=""):
                 time_cell = sheet.update_cell(i, cell.col + 1, time)
 
                 if(name != ""):
-                    name_cell = sheet.update_cell(i, cell.col + 3, name)
+                    name_cell = sheet.find("Name")
+                    name_cell = sheet.update_cell(i, name_cell.col, name)
                 
                 await ctx.message.channel.send(":white_check_mark: Scheduled game night successfully.")
                 return
-
-    except gspread.exceptions.APIError:
-        await ctx.message.channel.send("Game does not exist. Make sure arguments are in Game, Date, Time order and try again.\n\
-        If that doesn't work, see the addgame command.")
+    except gspread.exceptions.WorksheetNotFound:
+        await ctx.message.channel.send("Game does not exist. Make sure arguments are in Game, Date, Time order and try again. If that doesn't work, see the addgame command.")
+    except:
+        await ctx.message.channel.send("There was an error scheduling a game night. Make sure arguments are in Game, Date, Time order and try again. If that doesn't work, see the help command.")
 
 
 
