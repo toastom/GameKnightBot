@@ -92,6 +92,7 @@ async def add_game(ctx, *, game):
         sheet.update_cell(1, 3, "Time")
         sheet.update_cell(1, 4, "Num Attending")
         sheet.update_cell(1, 4, "Name")
+        sheet.update_cell(1, 5, "Event id")
         sheet.update_cell(1, 6, "Num Players")
         sheet.update_cell(2, 6, 0)
     except gspread.exceptions.APIError:
