@@ -43,7 +43,6 @@ def check_default_alias(game):
     print(game)
     return game
 
-
 @bot.event
 async def on_ready():
     print('discord version:')
@@ -265,7 +264,86 @@ async def join(ctx, game="", eventname=""):
         return
     except gspread.exceptions.APIError:
         await ctx.message.channel.send("Event does not exist. Make sure Event Name is valid.")
-    
+
+
+@bot.command(name="addalias")
+async def add_alias(ctx, game="", *, alias=""):
+    """
+    Game should be the exact name of the sheet when passed by user.
+    Multiple names can be entered at a time, separated by a comma and a space ', '.
+    Custom aliases are assigned exactly as given, including trailing whitespace after the first alias in the list.
+    Spacing is used in the middle of the alias given: e.g. 'addalias Minecraft mine craft' will allow the user to type 'addgame mine craft'.
+    Be careful when adding new aliases. They will conflict with the default aliases provided by GameKnight. Consult defaultalias before making
+        custom aliases.
+    """
+    #Check for all information first
+    if(game == "" or alias == ""):
+        await ctx.message.channel.send(":x: Missing desired game or alias(es) to assign.")
+        return
+
+    spread = client.open(str(ctx.guild.id))
+    sheet = spread.sheet1
+    game_cell = sheet.find("Game")
+    alias_cell = sheet.find("Alias")
+
+    w_sheets = spread.worksheets()
+    for g in w_sheets:
+        if(g.title == game):
+            print("Game found.")
+            #So we know the game exists. Let's see if it already has an alias list made
+            try: #Update the alias cell if we have added aliases for this game in the past
+                prev_game = sheet.find(game)
+                #Update the alias list with the request
+                alias_cell = sheet.cell(prev_game.row, alias_cell.col)
+                
+                alias_cell_list = []
+                alias_cell_list.append(alias_cell) 
+                print(alias_cell_list)
+
+                alias_list = alias.split(", ")
+
+                #Add the new aliases to the previous values
+                alias_cell_list[0].value = alias_cell_list[0].value + str(alias_list)
+                #Update the cell with alias
+                sheet.update_cell(alias_cell.row, alias_cell.col, alias_cell_list[0].value)
+
+                #Cell string cleanup
+                alias_cell = sheet.cell(prev_game.row, alias_cell.col)
+                new_ac = alias_cell.value.replace("][", ", ")
+                sheet.update_cell(alias_cell.row, alias_cell.col, new_ac)
+
+                await ctx.message.channel.send(":white_check_mark: Updated alias(es) {} for game {}.".format(str(alias_list), game))
+                return
+
+            except gspread.exceptions.CellNotFound: #If the game hasn't had any aliases made for it in the past
+                #print(sys.exc_info()[0])
+                break
+    else:
+        #We've reached the end and haven't broken out of other things. So, we haven't found the game.
+        await ctx.message.channel.send(":x: Game {} is not found. Consider addgame first!".format(game))
+        return
+
+    #Add alias to list of aliases
+    #Split the input into different aliases
+    alias_list = alias.split(", ")
+    print(alias_list)
+
+    #Now find the next blank cell in the same column as the empty game_cell
+    for i in range(game_cell.row, sheet.row_count):
+        cell = sheet.cell(i, game_cell.col)
+        #Found the next empty cell, now we attach the game to it, find the alias column and do the same
+        if(cell.value == ""):
+            sheet.update_cell(cell.row, cell.col, game)
+            sheet.update_cell(cell.row, alias_cell.col, str(alias_list))
+
+            #sheet.update_cell(cell.row, alias_cell.col, str(alias_list)) #Since we're passing a string here, every time we get this value
+                                                                         #cast to a list
+            await ctx.message.channel.send(":white_check_mark: Added new alias(es) {} for game {}.".format(str(alias_list), game))
+            return
+
+
+
+
 
 
 
