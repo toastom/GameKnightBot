@@ -267,14 +267,19 @@ async def join(ctx, game="", eventname=""):
         await ctx.message.channel.send("Event does not exist. Make sure Event Name is valid.")
     
 
+bot.remove_command('help')
 
-
-
-
-
-
-
-
+@bot.command(name="help")
+async def helpembed(ctx,):
+    embed = discord.Embed(title="Help")
+    embed.add_field(name=BOT_PREFIX + "addgame[gamename]", value="Adds the mentioned game to the spreadsheet", inline = False)
+    embed.add_field(name=BOT_PREFIX + "allgames", value="Prints all games that are in the spreadsheet", inline = False)
+    embed.add_field(name=BOT_PREFIX + "deletegame[gamename]", value="Deletes the mentioned game from the spreadsheet", inline=True)
+    embed.add_field(name=BOT_PREFIX + "schedule[game][date][time][name]", value="Schedules an event(Requires gamemaster role)", inline = True)
+    embed.add_field(name=BOT_PREFIX + "join[game][event name]", value ="Joins the event you selected", inline = False)
+    embed.add_field(name=BOT_PREFIX + "help", value="Shows this screen", inline = True)
+    embed.set_footer(text="Made by Kirbae#0001, tom233145#0069, Pinkpi#0001, hamdi#0001")
+    await ctx.message.channel.send(embed=embed)
 
 bot.run(TOKEN)
 
