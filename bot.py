@@ -4,6 +4,7 @@ import time
 from random import randint
 from discord.ext import commands
 from discord.utils import find
+import json
 
 import gspread
 from gspread import Client
@@ -398,7 +399,7 @@ async def join(ctx, game="", eventid=""):
     for i in range(1, spread.worksheet(game).row_count): #Looping through all the rows
             if(sheet.cell(i,1).value == str(ctx.message.author.name)+"#"+str(ctx.message.author.discriminator)): #Get the first cell in that column that's blank
                 # create embed
-                embed_fail = discord.Embed(title="Event",description=str(eventname), color=RED)
+                embed_fail = discord.Embed(title="Event", color=RED)
                 embed_fail.set_author(name="You're already signed up for this event", icon_url=ERROR)
                 # -
 
@@ -415,14 +416,14 @@ async def join(ctx, game="", eventid=""):
         sheet.update_cell((sheet.find("Num Players").row)+1,(sheet.find("Num Players").col),int(numplayers)+1)
 
         # create embed
-        embed_info = discord.Embed(title="Event",description=str(eventname), color=GREEN)
+        embed_info = discord.Embed(title="Event", color=GREEN)
         embed_info.set_author(name="Joined game night successfully!", icon_url=SUCCESS)
         # -
         await ctx.message.channel.send(embed=embed_info)
         return
     except gspread.exceptions.APIError:
         # create embed
-        embed_fail = discord.Embed(title="Event",description=str(eventname), color=RED)
+        embed_fail = discord.Embed(title="Event", color=RED)
         embed_fail.set_author(name="Event does not exist.", icon_url=ERROR)
         # -
         await ctx.message.channel.send(embed=embed_fail)
