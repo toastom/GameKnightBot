@@ -185,14 +185,63 @@ async def all_games(ctx):
     for i in sheets: #i is a worksheet
         game_list = game_list + "\n" + i.title
         amount += 1;
-
+    amount -= 1;
+    # check if embed not too big
+    if amount > 24:
+        game_list = game_list.split(", ")
+        embed_info = discord.Embed(title="Game Amount", description=str(amount), color=BLUE)
+        embed_info.set_author(name="{} Game List".format(ctx.guild.name), icon_url=INFO)
+        await ctx.message.channel.send(embed=embed_info)
+        for i in sheets:
+            if i.title == "Sheet1":
+                print("sheet 1 skipped")
+            else:
+                cell = i.find("Event Id").col
+                cell = i.col_values(cell)
+                print(cell)
+                cell = list(filter(None, cell))
+                events = len(cell)-1
+                embed_game = discord.Embed(title="number of events: " + str(events), description=str(amount), color=BLUE)
+                embed_game.set_author(name=i.title, icon_url=INFO)
+                await ctx.message.channel.send(embed=embed_game)
     # create embed
-    embed_info = discord.Embed(title="Game Amount" ,description=str(amount), color=BLUE)
-    embed_info.set_author(name="{} Game List".format(ctx.guild.name), icon_url=INFO)
-    embed_info.add_field(name="Games", value=game_list, inline=False)
+    else:
+        game_list = game_list.split(", ")
+        embed_info = discord.Embed(title="Game Amount", description=str(amount), color=BLUE)
+        embed_info.set_author(name="{} Game List".format(ctx.guild.name), icon_url=INFO)
+        for i in sheets:
+            if i.title == "Sheet1":
+                print("sheet 1 skipped")
+            else:
+                cell = i.find("Event Id").col
+                cell = i.col_values(cell)
+                print(cell)
+                cell = list(filter(None, cell))
+                events = len(cell) - 1
+                embed_info.add_field(name=i.title, value="Number of events: " + str(events), inline=False)
+                await ctx.message.channel.send(embed=embed_info)
     # -
-    await ctx.message.channel.send(embed=embed_info)
 
+
+@bot.command(name="events")
+async def events(ctx, game):
+    spread = client.open(str(ctx.guild.id))
+    #Get a list of all worksheets - check
+    #Have the bot say them - sheets - list
+    game = check_default_alias(game, ctx)
+    sheet = spread.worksheet(game)
+    cell = sheet.find("Event Id").col
+    cell = sheet.col_values(cell)
+    print(cell)
+    cell = list(filter(None, cell))
+    cell.pop(0)
+    embed_event = discord.Embed(title=str(sheet.title), description="These are the current events for this game", color=BLUE)
+    embed_event.set_author(name="{} Events List".format(ctx.guild.name), icon_url=INFO)
+    embed_event.add_field(name="Events", value='\n'.join(cell), inline=False)
+    await ctx.message.channel.send(embed=embed_event)
+    # create embed
+
+    # -
 @bot.command(name="deletegame")
 async def delete_game(ctx, *, game=None):
     game = check_default_alias(game, ctx)
