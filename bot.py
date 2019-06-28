@@ -13,7 +13,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 # We'll need to substitute the Prefix for an Enviroment Variable
 BOT_PREFIX = "&" # -Prefix is need to declare a Command in discord ex: !pizza "!" being the Prefix
-TOKEN = os.environ['testtoken'] # The token is also substituted for security reasons
+TOKEN = os.environ['token'] # The token is also substituted for security reasons
 # Icons for embeds
 SUCCESS = "http://www.pngmart.com/files/3/Green-Tick-PNG-Pic.png"
 ERROR = "http://icons.iconarchive.com/icons/google/noto-emoji-symbols/1024/73030-no-entry-icon.png"
@@ -117,23 +117,25 @@ async def on_guild_join(guild):
     }
     try:
         spreadsheet = client.create(str(guild.id))
-        spreadsheet.share('gameknightbot@gmail.com', perm_type='user', role='writer')
+
+        spreadsheet.share(value='gameknightbot@gmail.com', perm_type='user', role='writer') #Share with bot to edit
+        spreadsheet.share(value=None, perm_type='anyone', role='reader')
         # create embed
         embed_ready = discord.Embed(title="You're ready to create and join game nights! ", description=str(guild.id), color=GREEN)
-        embed_ready.set_author(name="A spreadsheet with your server ID has been made!", icon_url=str(guild.icon))
+        embed_ready.set_author(name="A spreadsheet with your server ID has been made!", icon_url=SUCCESS)
         # -
         general = find(lambda x: x.name == 'general', guild.text_channels)
         if general and general.permissions_for(guild.me).send_messages:
-                game_cell  = spreadsheet.sheet1.cell("A1")
-                alias_cell = spreadsheet.sheet1.cell("B1")
-                game_cell.update_cell("Game")
-                alias_cell.update_cell("Alias")
+                game_cell  = spreadsheet.sheet1.acell("A1")
+                alias_cell = spreadsheet.sheet1.acell("B1")
+                spreadsheet.sheet1.update_cell(game_cell.row, game_cell.col, "Game")
+                spreadsheet.sheet1.update_cell(alias_cell.row, alias_cell.col, "Alias")
 
                 await general.send(embed=embed_ready)
     except gspread.exceptions.APIError:
         # create embed
         embed_fail = discord.Embed(title="Unexpected error", color=RED)
-        embed_fail.set_author(name="A spreadsheet with your server ID could NOT be made!", icon_url=str(guild.icon))
+        embed_fail.set_author(name="A spreadsheet with your server ID could NOT be made!", icon_url=ERROR)
         # -
         general = find(lambda x: x.name == 'general', guild.text_channels)
         if general and general.permissions_for(guild.me).send_messages:
