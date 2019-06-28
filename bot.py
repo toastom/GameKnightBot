@@ -189,10 +189,9 @@ async def all_games(ctx):
     # create embed
     embed_info = discord.Embed(title="Game Amount" ,description=str(amount), color=BLUE)
     embed_info.set_author(name="{} Game List".format(ctx.guild.name), icon_url=INFO)
+    embed_info.add_field(name="Games", value=game_list, inline=False)
     # -
-
     await ctx.message.channel.send(embed=embed_info)
-    await ctx.message.channel.send("```{}```".format(game_list))
 
 @bot.command(name="deletegame")
 async def delete_game(ctx, *, game=None):
