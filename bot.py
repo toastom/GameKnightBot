@@ -1,12 +1,7 @@
-<<<<<<< HEAD
 
 import os, discord, random, sys
 import time
 from random import randint
-=======
-import os, discord, random, sys, json
-
->>>>>>> master
 from discord.ext import commands
 from discord.utils import find
 
@@ -99,11 +94,7 @@ async def add_game(ctx, *, game):
         sheet.update_cell(1, 3, "Time")
         sheet.update_cell(1, 4, "Num Attending")
         sheet.update_cell(1, 4, "Name")
-<<<<<<< HEAD
         sheet.update_cell(1, 5, "Event Id")
-=======
-        sheet.update_cell(1, 5, "Event id")
->>>>>>> master
         sheet.update_cell(1, 6, "Num Players")
         sheet.update_cell(2, 6, 0)
     except gspread.exceptions.APIError:
@@ -211,7 +202,6 @@ async def schedule(ctx, game="", date="", time="", name=""):
     if it doesn't exist, create it
     """
     try:
-<<<<<<< HEAD
         sheet = spread.worksheet(game)
         neweventid = game[0:2]+game[-2:]+"-"+str(randint(10000000, 99999999))
         cell = sheet.find("Date")
@@ -243,25 +233,6 @@ async def schedule(ctx, game="", date="", time="", name=""):
 
 
                 if(name != ""):
-=======
-        date_cell = sheet.find("Date")
-        time_cell = sheet.find("Time")
-        print(date_cell, time_cell)
-
-        cells_changed = []
-        
-        for i in range(date_cell.row, sheet.row_count): #Looping through all the rows, i is an int
-            cell = sheet.cell(i, date_cell.col)
-            print(str(cell))
-
-            if(cell.value == ""): #Get the first cell in the date column that's blank
-                #Update cells with Date and Time
-                cells_changed.append([(i, cell.col), (i, time_cell.col)])
-                print("\n{}".format("cells_changed: {}".format(cells_changed)))
-
-
-                if(name != ""):
->>>>>>> master
                     name_cell = sheet.find("Name")
                     cells_changed.append((i, name_cell.col))
                     print("\n{}".format(cells_changed))
@@ -313,16 +284,6 @@ async def join(ctx, game="", eventid=""):
         await ctx.message.channel.send("Event does not exist. Make sure Event Name is valid.")
     
 
-<<<<<<< HEAD
-
-
-
-
-
-
-
-
-=======
 bot.remove_command('help')
 
 @bot.command(name="help")
@@ -336,7 +297,6 @@ async def helpembed(ctx,):
     embed.add_field(name=BOT_PREFIX + "help", value="Shows this screen", inline = True)
     embed.set_footer(text="Made by Kirbae#0001, tom233145#0069, Pinkpi#0001, hamdi#0001")
     await ctx.message.channel.send(embed=embed)
->>>>>>> master
 
 bot.run(TOKEN)
 
