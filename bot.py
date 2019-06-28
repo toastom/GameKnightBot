@@ -207,8 +207,12 @@ async def delete_game(ctx, *, game=None):
 
     for i in sheets:
         print(str(game), i.title)
+        # create embed
+        embed_sh1 = discord.Embed(title="Can not delete Sheet1",description="Try deleting other games", color=RED)
+        embed_sh1.set_author(name="Invalid command", icon_url=ERROR)
+        # -
         if(str(game).lower() == "sheet1" and i.title == "Sheet1"):
-            await ctx.message.channel.send(":x: Cannot delete Sheet1. Try deleting other games.")
+            await ctx.message.channel.send(embed=embed_sh1)
             return
             
         elif(str(game) == i.title.lower()):
@@ -301,7 +305,7 @@ async def schedule(ctx, game="", date="", time="", name=""):
                 embed_fail = discord.Embed(title="This event is already scheduled for that game.", color=RED)
                 embed_fail.set_author(name="Unavailable slot", icon_url=ERROR)
                 # -
-                await ctx.message.channel.send("That event is already scheduled for that game.")
+                await ctx.message.channel.send(embed=embed_fail)
                 return
     #No other cells are found
     except gspread.exceptions.CellNotFound:
@@ -336,8 +340,15 @@ async def schedule(ctx, game="", date="", time="", name=""):
                     
                 sheet.update_cell(sheet.find("Event Id").row+i-1, sheet.find("Event Id").col, neweventid)
                 sheet.update_cell(sheet.find("Num Players").row+i-1, sheet.find("Num Players").col, 0)
+
+                # create embed
+                embed_finish = discord.Embed(title="New players can join using the event using the Event ID.",description="Command to join is {}join [game] [event id]".format(BOT_PREFIX), color=GREEN)
+                embed_finish.add_field(name="Event ID", value=neweventid, inline=True)
+                embed_finish.add_field(name="Game", value=game, inline=True)
+                embed_finish.set_author(name="Schedule Success", icon_url=SUCCESS)
+                # -
                 
-                await ctx.message.channel.send(":white_check_mark: Scheduled game night successfully. The Event ID is " + neweventid + ", so new players can join using " + BOT_PREFIX + "join " + game + " " + neweventid)
+                await ctx.message.channel.send(embed=embed_finish)
                 return
 
         date_cell = sheet.find("Date")
@@ -377,10 +388,10 @@ async def schedule(ctx, game="", date="", time="", name=""):
 
                 sheet.update_cells(cells, "RAW")
                 # create embed
-                embed_info = discord.Embed(title="Scheduled game night successfully!.", color=GREEN)
+                embed_info = discord.Embed(title="Scheduled game night successfully!", color=GREEN)
                 embed_info.set_author(name="Schedule Success", icon_url=SUCCESS)
                 # -
-                await ctx.message.channel.send(":white_check_mark: Scheduled game night successfully.")
+                await ctx.message.channel.send(embed=embed_info)
                 return
     except gspread.exceptions.WorksheetNotFound:
         # create embed
@@ -406,7 +417,7 @@ async def join(ctx, game="", eventid=""):
     for i in range(sheet.find(eventid).row, spread.worksheet(game).row_count): #Looping through all the rows
             if(sheet.cell(i,1).value == str(ctx.message.author.name)+"#"+str(ctx.message.author.discriminator)): #Get the first cell in that column that's blank
                 # create embed
-                embed_fail = discord.Embed(title="Event", color=RED)
+                embed_fail = discord.Embed(title="Event ID",description=eventid, color=RED)
                 embed_fail.set_author(name="You're already signed up for this event", icon_url=ERROR)
                 # -
 
@@ -454,6 +465,11 @@ async def add_alias(ctx, game="", *, alias=""):
     Be careful when adding new aliases. They will conflict with the default aliases provided by GameKnight. Consult defaultalias before making
         custom aliases.
     """
+
+    # create embed
+    embed_nogame = discord.Embed(title="Game",description=game, color=RED)
+    embed_nogame.set_author(name="Game not found, try addgame first!", icon_url=ERROR)
+    # -
     #Check for all information first
     if(game == "" or alias == ""):
         await ctx.message.channel.send(":x: Missing desired game or alias(es) to assign.")
@@ -490,7 +506,13 @@ async def add_alias(ctx, game="", *, alias=""):
                 new_ac = alias_cell.value.replace("][", ", ")
                 sheet.update_cell(alias_cell.row, alias_cell.col, new_ac)
 
-                await ctx.message.channel.send(":white_check_mark: Updated alias(es) {} for game {}.".format(str(alias_list), game))
+                # create embed
+                embed_alias = discord.Embed(title="Game",description=game, color=GREEN)
+                embed_alias.set_author(name="Updated alias(es)", icon_url=SUCCESS)
+                # -
+                
+                await ctx.message.channel.send(embed=embed_alias)
+                await ctx.message.channel.send("Aliases: ```{}```".format(str(alias_list)))
                 return
 
             except gspread.exceptions.CellNotFound: #If the game hasn't had any aliases made for it in the past
@@ -498,7 +520,8 @@ async def add_alias(ctx, game="", *, alias=""):
                 break
     else:
         #We've reached the end and haven't broken out of other things. So, we haven't found the game.
-        await ctx.message.channel.send(":x: Game {} is not found. Consider addgame first!".format(game))
+        
+        await ctx.message.channel.send(embed=embed_nogame)
         return
 
     #Add alias to list of aliases
@@ -516,7 +539,12 @@ async def add_alias(ctx, game="", *, alias=""):
 
             #sheet.update_cell(cell.row, alias_cell.col, str(alias_list)) #Since we're passing a string here, every time we get this value
                                                                          #cast to a list
-            await ctx.message.channel.send(":white_check_mark: Added new alias(es) {} for game {}.".format(str(alias_list), game))
+            # create embed
+            embed_alias = discord.Embed(title="Game",description=game, color=GREEN)
+            embed_alias.set_author(name="Updated alias(es)", icon_url=SUCCESS)
+            # -
+            await ctx.message.channel.send(embed=embed_alias)
+            await ctx.message.channel.send("```{}```".format(str(alias_list)))
             return
 
 
@@ -532,7 +560,7 @@ async def helpembed(ctx,):
     embed.add_field(name=BOT_PREFIX + "allgames", value="Prints all games that are in the spreadsheet", inline = False)
     embed.add_field(name=BOT_PREFIX + "deletegame [gamename]", value="Deletes the mentioned game from the spreadsheet", inline=True)
     embed.add_field(name=BOT_PREFIX + "schedule [game]  [date] [time] [name]", value="Schedules an event(Requires gamemaster role)", inline = True)
-    embed.add_field(name=BOT_PREFIX + "join [game][event name]", value ="Joins the event you selected", inline = False)
+    embed.add_field(name=BOT_PREFIX + "join [game][event id]", value ="Joins the event you selected", inline = False)
     embed.add_field(name=BOT_PREFIX + "addalias [game] [alias]", value="adds an alias to make it easier to add games", inline=False)
     embed.add_field(name=BOT_PREFIX + "help", value="Shows this screen", inline = True)
     embed.set_footer(text="Made by Kirbae#0001, tom233145#0069, Pinkpi#0001, hamdi#0001")
