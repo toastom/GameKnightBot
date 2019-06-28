@@ -1,5 +1,5 @@
-# GameKnightBot
-GameKnightBot is a helpful game night scheduling bot using Google Spreadsheets API made for the first ever Discord Hack Week. As a Game Night Organizer, you will need the role "Gamemaster" allowing you to add scheduled events to the Server's spreadsheet. Because of the server sided access of GameKnight, it will work great in big servers where there would be a lot of different games for people to join into. It can also work great for smaller servers that just want a better way to organize their game nights.
+# GameKnight
+GameKnight is a helpful game night scheduling bot using Google Spreadsheets API made for the first ever Discord Hack Week. As a Game Night Organizer, you will need the role "Gamemaster" allowing you to add scheduled events to the Server's spreadsheet. Because of the server sided access of GameKnight, it will work great in big servers where there would be a lot of different games for people to join into. It can also work great for smaller servers that just want a better way to organize their game nights.
 
 # Use
 -To schedule a game, first you will need to add a game to your server. To do this, simply type "gk!addgame [game]" and the bot will create a sheet in the background to organize this new game. You can also delete a game with "gk!deletegame [game]". Just make sure the game that you're trying to delete exists! You can also view all games in your server with "gk!allgames".
