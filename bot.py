@@ -21,8 +21,36 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
 client: Client = gspread.authorize(creds)
 
+def check_server_alias(game, context):
+    spread = client.open(str(context.guild.id))
+    sheet = spread.sheet1
 
-def check_default_alias(game):
+    try:
+        #game_cell = sheet.find("Game")
+        alias_cell = sheet.find("Alias")
+        #Loop through all the rows, don't worry we'll break or return out before the end
+        for r in range(alias_cell.row, sheet.row_count):
+            server_alias = sheet.cell(r, alias_cell.col)
+            server_alias = server_alias.value
+            print("Server alias: ", server_alias)
+            if(server_alias != ""):
+                #Server alias is a string, get rid of the '[]' and separate each alias
+                server_alias.replace("[", "")
+                server_alias.replace("]", "")
+                server_alias.split(", ")
+                print(str(server_alias))
+
+                if(game in server_alias):
+                    return sheet.cell(r, alias_cell.col - 1).value
+            else:
+                return False
+    
+    #If we don't find a game
+    except gspread.exceptions.CellNotFound:
+        return False
+
+
+def check_default_alias(game, context):
     with open("default_aliases.json", "r") as j:
         default_aliases = j.read()
     aliases = json.loads(default_aliases)
@@ -35,6 +63,14 @@ def check_default_alias(game):
         #print(i[0], i[1]) #i is a list of tuples, first is key, second is list of that key's values
         if(lower_game in i[1]): #If game is one of the aliases for games
             game = i[0] #Set game to the proper game
+            break
+    else: #Game is not found in default_aliases
+        server_game = check_server_alias(game, context)
+        #If we did find the game in server aliases
+        if(server_game):
+            #game = server_game
+            return server_game
+        
 
     game = list(game)
     for i in range(0, len(game)):
@@ -44,7 +80,6 @@ def check_default_alias(game):
     game = game.capitalize()
     print(game)
     return game
-
 
 @bot.event
 async def on_ready():
@@ -74,6 +109,11 @@ async def on_guild_join(guild):
         spreadsheet.share('gameknightbot@gmail.com', perm_type='user', role='writer')
         general = find(lambda x: x.name == 'general', guild.text_channels)
         if general and general.permissions_for(guild.me).send_messages:
+                game_cell  = spreadsheet.sheet1.cell("A1")
+                alias_cell = spreadsheet.sheet1.cell("B1")
+                game_cell.update_cell("Game")
+                alias_cell.update_cell("Alias")
+
                 await general.send('Hello a Spreadsheet with the name `{}` has been created for your server'.format(str(guild.id)))
     except gspread.exceptions.APIError:
         general = find(lambda x: x.name == 'general', guild.text_channels)
@@ -83,7 +123,7 @@ async def on_guild_join(guild):
 
 @bot.command(name="addgame")
 async def add_game(ctx, *, game):
-    game = check_default_alias(game)
+    game = check_default_alias(game, ctx)
     spread = client.open(str(ctx.guild.id))
     try:
         spread.add_worksheet(title=str(game), rows="1000", cols="26")
@@ -121,7 +161,7 @@ async def all_games(ctx):
 
 @bot.command(name="deletegame")
 async def delete_game(ctx, *, game=None):
-    game = check_default_alias(game)
+    game = check_default_alias(game, ctx)
     spread = client.open(str(ctx.guild.id))
     sheets = spread.worksheets()
 
@@ -129,9 +169,17 @@ async def delete_game(ctx, *, game=None):
 
     for i in sheets:
         print(str(game), i.title)
-        if(str(game) == i.title.lower()):
+        if(str(game).lower() == "sheet1" and i.title == "Sheet1"):
+            await ctx.message.channel.send(":x: Cannot delete Sheet1. Try deleting other games.")
+            return
+            
+        elif(str(game) == i.title.lower()):
             spread.del_worksheet(i)
             game = game.capitalize()
+
+            old_game_alias = spread.sheet1.find(game)
+            spread.sheet1.delete_row(old_game_alias.row)
+
             await ctx.message.channel.send("Game {} successfully deleted.".format(str(game)))
             return
         elif(game == None):
@@ -171,7 +219,7 @@ async def schedule(ctx, game="", date="", time="", name=""):
         await ctx.message.channel.send("Missing information required for scheduling. See help command for details.")
         return
     
-    game = check_default_alias(game)
+    game = check_default_alias(game, ctx)
     spread = client.open(str(ctx.guild.id))
     sheet = spread.worksheet(game)
 
@@ -252,7 +300,7 @@ async def schedule(ctx, game="", date="", time="", name=""):
                     print("Cells: {}".format(cells))
 
                 sheet.update_cells(cells, "RAW")
-                await ctx.message.channel.send(":white_check_mark: Scheduled game night successfully.")
+                await ctx.message.channel.send(":white_check_mark: Scheduled game night for game {} successfully.".format(game))
                 return
     except gspread.exceptions.WorksheetNotFound:
         await ctx.message.channel.send("Game does not exist. Make sure arguments are in Game, Date, Time order and try again. If that doesn't work, see the addgame command.")     
@@ -282,7 +330,86 @@ async def join(ctx, game="", eventid=""):
         return
     except gspread.exceptions.APIError:
         await ctx.message.channel.send("Event does not exist. Make sure Event Name is valid.")
-    
+
+
+@bot.command(name="addalias")
+async def add_alias(ctx, game="", *, alias=""):
+    """
+    Game should be the exact name of the sheet when passed by user.
+    Multiple names can be entered at a time, separated by a comma and a space ', '.
+    Custom aliases are assigned exactly as given, including trailing whitespace after the first alias in the list.
+    Spacing is used in the middle of the alias given: e.g. 'addalias Minecraft mine craft' will allow the user to type 'addgame mine craft'.
+    Be careful when adding new aliases. They will conflict with the default aliases provided by GameKnight. Consult defaultalias before making
+        custom aliases.
+    """
+    #Check for all information first
+    if(game == "" or alias == ""):
+        await ctx.message.channel.send(":x: Missing desired game or alias(es) to assign.")
+        return
+
+    spread = client.open(str(ctx.guild.id))
+    sheet = spread.sheet1
+    game_cell = sheet.find("Game")
+    alias_cell = sheet.find("Alias")
+
+    w_sheets = spread.worksheets()
+    for g in w_sheets:
+        if(g.title == game):
+            print("Game found.")
+            #So we know the game exists. Let's see if it already has an alias list made
+            try: #Update the alias cell if we have added aliases for this game in the past
+                prev_game = sheet.find(game)
+                #Update the alias list with the request
+                alias_cell = sheet.cell(prev_game.row, alias_cell.col)
+                
+                alias_cell_list = []
+                alias_cell_list.append(alias_cell) 
+                print(alias_cell_list)
+
+                alias_list = alias.split(", ")
+
+                #Add the new aliases to the previous values
+                alias_cell_list[0].value = alias_cell_list[0].value + str(alias_list)
+                #Update the cell with alias
+                sheet.update_cell(alias_cell.row, alias_cell.col, alias_cell_list[0].value)
+
+                #Cell string cleanup
+                alias_cell = sheet.cell(prev_game.row, alias_cell.col)
+                new_ac = alias_cell.value.replace("][", ", ")
+                sheet.update_cell(alias_cell.row, alias_cell.col, new_ac)
+
+                await ctx.message.channel.send(":white_check_mark: Updated alias(es) {} for game {}.".format(str(alias_list), game))
+                return
+
+            except gspread.exceptions.CellNotFound: #If the game hasn't had any aliases made for it in the past
+                #print(sys.exc_info()[0])
+                break
+    else:
+        #We've reached the end and haven't broken out of other things. So, we haven't found the game.
+        await ctx.message.channel.send(":x: Game {} is not found. Consider addgame first!".format(game))
+        return
+
+    #Add alias to list of aliases
+    #Split the input into different aliases
+    alias_list = alias.split(", ")
+    print(alias_list)
+
+    #Now find the next blank cell in the same column as the empty game_cell
+    for i in range(game_cell.row, sheet.row_count):
+        cell = sheet.cell(i, game_cell.col)
+        #Found the next empty cell, now we attach the game to it, find the alias column and do the same
+        if(cell.value == ""):
+            sheet.update_cell(cell.row, cell.col, game)
+            sheet.update_cell(cell.row, alias_cell.col, str(alias_list))
+
+            #sheet.update_cell(cell.row, alias_cell.col, str(alias_list)) #Since we're passing a string here, every time we get this value
+                                                                         #cast to a list
+            await ctx.message.channel.send(":white_check_mark: Added new alias(es) {} for game {}.".format(str(alias_list), game))
+            return
+
+
+
+
 
 bot.remove_command('help')
 
