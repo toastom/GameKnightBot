@@ -1,7 +1,6 @@
 # GameKnightBot
 GameKnightBot is a helpful game night scheduling bot using Google Spreadsheets API made for the first ever Discord Hack Week. As a Game Night Organizer, you will need the role "Gamemaster" allowing you to add scheduled events to the Server's spreadsheet. Because of the server sided access of GameKnight, it will work great in big servers where there would be a lot of different games for people to join into. It can also work great for smaller servers that just want a better way to organize their game nights.
 
-
 # Use
 -To schedule a game, first you will need to add a game to your server. To do this, simply type "gk!addgame [game]" and the bot will create a sheet in the background to organize this new game. You can also delete a game with "gk!deletegame [game]". Just make sure the game that you're trying to delete exists! You can also view all games in your server with "gk!allgames".
 
@@ -17,6 +16,16 @@ GameKnightBot is a helpful game night scheduling bot using Google Spreadsheets A
 
 Our team is a group of teenagers all from different places, representing US West Coast, US East Coast, Winnepeg, and even the Netherlands. We had a lot of fun figuring things out during this competition, and were really inspired by tom233145#0069's original idea for this bot. Our team members are listed here as Pinkpi#0001 (16), tom233145#0069 (17), hamdi#0001 (18), and Kirbae#0001 (19).
 
+"I'm Pinkpi and my favorite game to play with people is generally Duck Game because we mess around the whole time and try out glitches and it's super fun. I hope this bot can help people stay more organized when creating events. I suck at organization, that's why I created a robot to do it instead of me. I'm so glad that our team situtation worked out the way it did, everyone was super helpful and amazing. <3 Love you guys!" -Me (Pinkpi)
+
+"I'm Hamdi and my favorite game to play with people is Overwatch because I really like being stuck in Gold since season 2" -🧂Hamdi🧂
+
+"I'm Kirbae and my favorite video game to play with people is Fivem/Gta V because I made some good friends in that game and it's just easy to have fun" -Kirbae
+
+"I'm the owner of this github account and my discord is tom233145. My favorite game right now is Dauntless because of the grind. It [The Bot] was really an idea for a server I'm in that has game nights occasionally, but not that common. Going to try to get them to have some more with this." -tom233145
+
 # The Future of GameKnight
 
 Our original ideas for the implementation of this bot involved global search of events between servers, with the bot storing an invite link for people who join. Events could also be open or closed, joining closed events could require acceptence by the Game Night Organizer. We will also work on smaller updates, like being able to toggle whether or not you need the Gamemaster role to schedule events, which some people may not want to use, and custom prefixes. These are all things that we were not able to implement during hackweek, however they are the next steps.
+
+Readme by Pinkpi with quotes from tom233145, Kirbae, and Hamdi
