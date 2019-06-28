@@ -166,7 +166,11 @@ async def delete_game(ctx, *, game=None):
 
     for i in sheets:
         print(str(game), i.title)
-        if(str(game) == i.title.lower()):
+        if(str(game).lower() == "sheet1" and i.title == "Sheet1"):
+            await ctx.message.channel.send(":x: Cannot delete Sheet1. Try deleting other games.")
+            return
+            
+        elif(str(game) == i.title.lower()):
             spread.del_worksheet(i)
             game = game.capitalize()
 
