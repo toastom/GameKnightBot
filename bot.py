@@ -12,8 +12,8 @@ from gspread import Client
 from oauth2client.service_account import ServiceAccountCredentials
 
 # We'll need to substitute the Prefix for an Enviroment Variable
-BOT_PREFIX = "&" # -Prefix is need to declare a Command in discord ex: !pizza "!" being the Prefix
-TOKEN = os.environ['testtoken'] # The token is also substituted for security reasons
+BOT_PREFIX = os.environ['prefix'] # -Prefix is need to declare a Command in discord ex: !pizza "!" being the Prefix
+TOKEN = os.environ['token'] # The token is also substituted for security reasons
 # Icons for embeds
 SUCCESS = "http://www.pngmart.com/files/3/Green-Tick-PNG-Pic.png"
 ERROR = "http://icons.iconarchive.com/icons/google/noto-emoji-symbols/1024/73030-no-entry-icon.png"
@@ -325,12 +325,12 @@ async def schedule(ctx, game="", date="", time="", name=""):
         sheet = spread.worksheet(game)
 
         neweventid = game[0:2]+game[-2:]+"-"+str(randint(10000000, 99999999))
-        cell = sheet.find("Date")
+        cell = sheet.find("Player Name")
         for i in range(cell.row, sheet.row_count): #Looping through all the rows
             cell = sheet.cell(i, cell.col)
             if(cell.value == ""): #Get the first cell in that column that's blank
-                sheet.update_cell(i, cell.col, date)
-                time_cell = sheet.update_cell(i, cell.col + 1, time)
+                sheet.update_cell(i, cell.col + 1, date)
+                time_cell = sheet.update_cell(i, cell.col + 2, time)
 
                 if(name != ""):
                     name_cell = sheet.update_cell(i, cell.col + 2, name)
@@ -338,7 +338,7 @@ async def schedule(ctx, game="", date="", time="", name=""):
                 sheet.update_cell(sheet.find("Event Id").row+i-1, sheet.find("Event Id").col, neweventid)
                 sheet.update_cell(sheet.find("Num Players").row+i-1, sheet.find("Num Players").col, 0)
                 
-                await ctx.message.channel.send(":white_check_mark: Scheduled game night successfully. The Event ID is " + neweventid + ", so new players can join using .join " + game + " " + neweventid)
+                await ctx.message.channel.send(":white_check_mark: Scheduled game night successfully. The Event ID is " + neweventid + ", so new players can join using " + BOT_PREFIX + "join " + game + " " + neweventid)
                 return
 
         date_cell = sheet.find("Date")
@@ -404,7 +404,7 @@ async def join(ctx, game="", eventid=""):
         # -
         await ctx.message.channel.send(embed=embed_fail)
         return
-    for i in range(1, spread.worksheet(game).row_count): #Looping through all the rows
+    for i in range(sheet.find(eventid).row, spread.worksheet(game).row_count): #Looping through all the rows
             if(sheet.cell(i,1).value == str(ctx.message.author.name)+"#"+str(ctx.message.author.discriminator)): #Get the first cell in that column that's blank
                 # create embed
                 embed_fail = discord.Embed(title="Event", color=RED)
@@ -417,11 +417,17 @@ async def join(ctx, game="", eventid=""):
             
                 break
     try:
-        numplayers = sheet.cell((sheet.find("Num Players").row)+1, (sheet.find("Num Players").col)).value
+        numplayers = sheet.cell((sheet.find(eventid).row), (sheet.find("Num Players").col)).value
 
         eventCellRow = sheet.find(eventid)
-        sheet.update_cell(eventCellRow.row+int(numplayers), 1, str(ctx.message.author.name)+"#"+str(ctx.message.author.discriminator))
-        sheet.update_cell((sheet.find("Num Players").row)+1,(sheet.find("Num Players").col),int(numplayers)+1)
+        sheet.update_cell(eventCellRow.row, 1, "these people joined:")
+        empty_row = ['' for cell in range(sheet.col_count)]
+        insertion_row = int(eventCellRow.row + int(numplayers) + 1)
+        sheet.insert_row(empty_row, index=insertion_row)
+        sheet.update_cell((sheet.find(eventid).row),(sheet.find("Num Players").col),int(numplayers)+1)
+        sheet.update_cell(eventCellRow.row + int(numplayers) + 1, 1, str(ctx.message.author.name) + "#" + str(ctx.message.author.discriminator))
+
+
 
         # create embed
         embed_info = discord.Embed(title="Event", color=GREEN)
@@ -430,6 +436,7 @@ async def join(ctx, game="", eventid=""):
         await ctx.message.channel.send(embed=embed_info)
         return
     except gspread.exceptions.APIError:
+        print(gspread.exceptions.APIError)
         # create embed
         embed_fail = discord.Embed(title="Event", color=RED)
         embed_fail.set_author(name="Event does not exist.", icon_url=ERROR)
