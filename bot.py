@@ -19,8 +19,36 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
 client: Client = gspread.authorize(creds)
 
+def check_server_alias(game, context):
+    spread = client.open(str(context.guild.id))
+    sheet = spread.sheet1
 
-def check_default_alias(game):
+    try:
+        #game_cell = sheet.find("Game")
+        alias_cell = sheet.find("Alias")
+        #Loop through all the rows, don't worry we'll break or return out before the end
+        for r in range(alias_cell.row, sheet.row_count):
+            server_alias = sheet.cell(r, alias_cell.col)
+            server_alias = server_alias.value
+            print("Server alias: ", server_alias)
+            if(server_alias != ""):
+                #Server alias is a string, get rid of the '[]' and separate each alias
+                server_alias.replace("[", "")
+                server_alias.replace("]", "")
+                server_alias.split(", ")
+                print(str(server_alias))
+
+                if(game in server_alias):
+                    return sheet.cell(r, alias_cell.col - 1).value
+            else:
+                return False
+    
+    #If we don't find a game
+    except gspread.exceptions.CellNotFound:
+        return False
+
+
+def check_default_alias(game, context):
     with open("default_aliases.json", "r") as j:
         default_aliases = j.read()
     aliases = json.loads(default_aliases)
@@ -33,6 +61,14 @@ def check_default_alias(game):
         #print(i[0], i[1]) #i is a list of tuples, first is key, second is list of that key's values
         if(lower_game in i[1]): #If game is one of the aliases for games
             game = i[0] #Set game to the proper game
+            break
+    else: #Game is not found in default_aliases
+        server_game = check_server_alias(game, context)
+        #If we did find the game in server aliases
+        if(server_game):
+            #game = server_game
+            return server_game
+        
 
     game = list(game)
     for i in range(0, len(game)):
@@ -80,7 +116,7 @@ async def on_guild_join(guild):
 
 @bot.command(name="addgame")
 async def add_game(ctx, *, game):
-    game = check_default_alias(game)
+    game = check_default_alias(game, ctx)
     spread = client.open(str(ctx.guild.id))
     try:
         spread.add_worksheet(title=str(game), rows="1000", cols="26")
@@ -117,7 +153,7 @@ async def all_games(ctx):
 
 @bot.command(name="deletegame")
 async def delete_game(ctx, *, game=None):
-    game = check_default_alias(game)
+    game = check_default_alias(game, ctx)
     spread = client.open(str(ctx.guild.id))
     sheets = spread.worksheets()
 
@@ -167,7 +203,7 @@ async def schedule(ctx, game="", date="", time="", name=""):
         await ctx.message.channel.send("Missing information required for scheduling. See help command for details.")
         return
     
-    game = check_default_alias(game)
+    game = check_default_alias(game, ctx)
     spread = client.open(str(ctx.guild.id))
     sheet = spread.worksheet(game)
 
@@ -234,7 +270,7 @@ async def schedule(ctx, game="", date="", time="", name=""):
                     print("Cells: {}".format(cells))
 
                 sheet.update_cells(cells, "RAW")
-                await ctx.message.channel.send(":white_check_mark: Scheduled game night successfully.")
+                await ctx.message.channel.send(":white_check_mark: Scheduled game night for game {} successfully.".format(game))
                 return
     except gspread.exceptions.WorksheetNotFound:
         await ctx.message.channel.send("Game does not exist. Make sure arguments are in Game, Date, Time order and try again. If that doesn't work, see the addgame command.")     
