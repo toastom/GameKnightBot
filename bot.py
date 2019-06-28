@@ -1,5 +1,5 @@
 
-import os, discord, random, sys
+import os, discord, random, sys, json
 import time
 from random import randint
 from discord.ext import commands
@@ -251,6 +251,7 @@ async def schedule(ctx, game="", date="", time="", name=""):
     """
     try:
         sheet = spread.worksheet(game)
+
         neweventid = game[0:2]+game[-2:]+"-"+str(randint(10000000, 99999999))
         cell = sheet.find("Date")
         for i in range(cell.row, sheet.row_count): #Looping through all the rows
@@ -261,9 +262,13 @@ async def schedule(ctx, game="", date="", time="", name=""):
 
                 if(name != ""):
                     name_cell = sheet.update_cell(i, cell.col + 2, name)
+                    
                 sheet.update_cell(sheet.find("Event Id").row+i-1, sheet.find("Event Id").col, neweventid)
                 sheet.update_cell(sheet.find("Num Players").row+i-1, sheet.find("Num Players").col, 0)
+                
                 await ctx.message.channel.send(":white_check_mark: Scheduled game night successfully. The Event ID is " + neweventid + ", so new players can join using .join " + game + " " + neweventid)
+                return
+
         date_cell = sheet.find("Date")
         time_cell = sheet.find("Time")
         print(date_cell, time_cell)
@@ -308,7 +313,10 @@ async def schedule(ctx, game="", date="", time="", name=""):
 @bot.command(name="join")
 async def join(ctx, game="", eventid=""):
     spread = client.open(str(ctx.guild.id))
+
+    game = check_default_alias(game, ctx)
     sheet = spread.worksheet(game)
+
     if(eventid == ""):
         await ctx.message.channel.send("Missing information required for joining. See help command for details.")
         return
