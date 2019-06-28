@@ -11,8 +11,18 @@ from gspread import Client
 from oauth2client.service_account import ServiceAccountCredentials
 
 # We'll need to substitute the Prefix for an Enviroment Variable
-BOT_PREFIX = os.environ['prefix'] # -Prefix is need to declare a Command in discord ex: !pizza "!" being the Prefix
-TOKEN = os.environ['token'] # The token is also substituted for security reasons
+BOT_PREFIX = "&" # -Prefix is need to declare a Command in discord ex: !pizza "!" being the Prefix
+TOKEN = os.environ['testtoken'] # The token is also substituted for security reasons
+# Icons for embeds
+SUCCESS = "http://www.pngmart.com/files/3/Green-Tick-PNG-Pic.png"
+ERROR = "http://icons.iconarchive.com/icons/google/noto-emoji-symbols/1024/73030-no-entry-icon.png"
+INFO = "https://cdn4.iconfinder.com/data/icons/meBaze-Freebies/512/info.png"
+# Colors for embeds
+GREEN = 0x3cf048
+RED = 0xff522b
+BLUE = 0x3c8df0
+YELLOW = 0xf0e73c
+
 
 bot = commands.Bot(command_prefix=BOT_PREFIX)
 # Google Credentials authorization
@@ -107,6 +117,10 @@ async def on_guild_join(guild):
     try:
         spreadsheet = client.create(str(guild.id))
         spreadsheet.share('gameknightbot@gmail.com', perm_type='user', role='writer')
+        # create embed
+        embed_ready = discord.Embed(title="You're ready to create and join game nights! ", description=str(guild.id), color=GREEN)
+        embed_ready.set_author(name="A spreadsheet with your server ID has been made!", icon_url=str(guild.icon))
+        # -
         general = find(lambda x: x.name == 'general', guild.text_channels)
         if general and general.permissions_for(guild.me).send_messages:
                 game_cell  = spreadsheet.sheet1.cell("A1")
@@ -114,17 +128,22 @@ async def on_guild_join(guild):
                 game_cell.update_cell("Game")
                 alias_cell.update_cell("Alias")
 
-                await general.send('Hello a Spreadsheet with the name `{}` has been created for your server'.format(str(guild.id)))
+                await general.send(embed=embed_ready)
     except gspread.exceptions.APIError:
+        # create embed
+        embed_fail = discord.Embed(title="Unexpected error", color=RED)
+        embed_fail.set_author(name="A spreadsheet with your server ID could NOT be made!", icon_url=str(guild.icon))
+        # -
         general = find(lambda x: x.name == 'general', guild.text_channels)
         if general and general.permissions_for(guild.me).send_messages:
-            await general.send('Hello a Spreadsheet with the name `{}` couldn\'t be created')
+            await general.send(embed=embed_fail)
 
 
 @bot.command(name="addgame")
 async def add_game(ctx, *, game):
     game = check_default_alias(game, ctx)
     spread = client.open(str(ctx.guild.id))
+
     try:
         spread.add_worksheet(title=str(game), rows="1000", cols="26")
         sheet = spread.worksheet(game)
@@ -137,33 +156,52 @@ async def add_game(ctx, *, game):
         sheet.update_cell(1, 5, "Event Id")
         sheet.update_cell(1, 6, "Num Players")
         sheet.update_cell(2, 6, 0)
+        # create embed
+        embed_ready = discord.Embed(title="Game", description=str(game), color=GREEN)
+        embed_ready.set_author(name="Game Added", icon_url=SUCCESS)
+        # -
     except gspread.exceptions.APIError:
+        # create embed
+        embed_fail = discord.Embed(title="Game already exists!",description=str(game), color=RED)
+        embed_fail.set_author(name="A game could not be added.", icon_url=ERROR)
+        # -
         print("A(n) {} error occurred trying to add a game.".format(sys.exc_info()[0]))
-        await ctx.message.channel.send("Game is already added. :confused:")
+        await ctx.message.channel.send(embed=embed_fail)
         return
 
-    await ctx.message.channel.send(":white_check_mark: New game {} added".format(str(game)))
+    await ctx.message.channel.send(embed=embed_ready)
 
 @bot.command(name="allgames")
 async def all_games(ctx):
     spread = client.open(str(ctx.guild.id))
 
     sheets = spread.worksheets()
-    print(sheets)
 
     #Get a list of all worksheets - check
     #Have the bot say them - sheets - list
     game_list = ""
+    amount = 0;
     for i in sheets: #i is a worksheet
         game_list = game_list + "\n" + i.title
+        amount += 1;
 
-    await ctx.message.channel.send("All added games for this server: \n{}".format(game_list))
+    # create embed
+    embed_info = discord.Embed(title="Game Amount" ,description=str(amount), color=BLUE)
+    embed_info.set_author(name="{} Game List".format(ctx.guild.name), icon_url=INFO)
+    # -
+
+    await ctx.message.channel.send(embed=embed_info)
+    await ctx.message.channel.send("```{}```".format(game_list))
 
 @bot.command(name="deletegame")
 async def delete_game(ctx, *, game=None):
     game = check_default_alias(game, ctx)
     spread = client.open(str(ctx.guild.id))
     sheets = spread.worksheets()
+    # create embed
+    embed_fail = discord.Embed(title="Game does not exist" ,description=str(game), color=RED)
+    embed_fail.set_author(name="Game NOT deleted", icon_url=ERROR)
+    # -
 
     if(game):   game = game.lower()
 
@@ -180,13 +218,22 @@ async def delete_game(ctx, *, game=None):
             old_game_alias = spread.sheet1.find(game)
             spread.sheet1.delete_row(old_game_alias.row)
 
-            await ctx.message.channel.send("Game {} successfully deleted.".format(str(game)))
+            # create embed
+            embed_ready = discord.Embed(title="Game" ,description=str(game), color=GREEN)
+            embed_ready.set_author(name="Game Deleted", icon_url=SUCCESS)
+            # -
+            await ctx.message.channel.send(embed=embed_ready)
             return
         elif(game == None):
-            await ctx.message.channel.send(":x: Must input a game to delete.")
+            # create embed
+            embed_err = discord.Embed(title="Must input a game to delete", color=RED)
+            embed_err.set_author(name="Game NOT deleted", icon_url=ERROR)
+            # -
+            await ctx.message.channel.send(embed=embed_err)
             return
     else: #When the loop ends and we haven't returned out of the other things, then we haven't found the game.
-        await ctx.message.channel.send(":x: Game {} does not exist.".format(str(game)))
+        
+        await ctx.message.channel.send(embed=embed_fail)
         return
 
 
@@ -202,7 +249,11 @@ async def schedule(ctx, game="", date="", time="", name=""):
             print("Gamemaster role available.")
     
     if(gamemaster == None): #If "Gamemaster" role was not found
-        await ctx.message.channel.send('No role titled "Gamemaster". Contact server staff to make this role (case-sensitive).')
+        # create embed
+        embed_fail = discord.Embed(title="Gamemaster role does not exist. Contact server staff to ask them to make this role. (case-sensitive)", color=RED)
+        embed_fail.set_author(name="Gamemaster not available", icon_url=ERROR)
+        # -
+        await ctx.message.channel.send(embed=embed_fail)
         return
        
     #If the message author is in the list of people that have the "Gamemaster" role
@@ -210,24 +261,34 @@ async def schedule(ctx, game="", date="", time="", name=""):
         #Let them schedule the event
         print("Able to schedule.")
     else:
-        await ctx.message.channel.send('Only those with the "Gamemaster" role can schedule game nights.')
+        # create embed
+        embed_fail = discord.Embed(title='Only those with the "Gamemaster" role can schedule game nights', color=RED)
+        embed_fail.set_author(name="Permission denied", icon_url=ERROR)
+        # -
+        await ctx.message.channel.send(embed=embed_fail)
         return
 
     #After all that permissions checking, time to catch incomplete information!
     #Game, date and time are absolutely mandatory, while name is optional
     if(game == "" or date == "" or time == ""):
-        await ctx.message.channel.send("Missing information required for scheduling. See help command for details.")
+        # create embed
+        embed_fail = discord.Embed(title="Missing information required for scheduling. See help command for details.", color=RED)
+        embed_fail.set_author(name="Incomplete command", icon_url=ERROR)
+        # -
+        await ctx.message.channel.send(embed=embed_fail)
         return
     
     game = check_default_alias(game, ctx)
     spread = client.open(str(ctx.guild.id))
     sheet = spread.worksheet(game)
-
-    var_date = None
-    var_time = None
-
-    print(str(sheet.cell(2, 2)), str(sheet.cell(2, 3)))
+        
     try:
+        
+
+        var_date = None
+        var_time = None
+
+        print(str(sheet.cell(2, 2)), str(sheet.cell(2, 3)))
         #Try to find others cell with the same data
         var_date = sheet.find(str(date))
         var_time = sheet.find(str(time))
@@ -236,11 +297,21 @@ async def schedule(ctx, game="", date="", time="", name=""):
             print("Date has been found.")
             if(time == var_time.value):
                 print("Time has been found.")
+                # create embed
+                embed_fail = discord.Embed(title="This event is already scheduled for that game.", color=RED)
+                embed_fail.set_author(name="Unavailable slot", icon_url=ERROR)
+                # -
                 await ctx.message.channel.send("That event is already scheduled for that game.")
                 return
     #No other cells are found
     except gspread.exceptions.CellNotFound:
         print("No dupes found. Proceed to scheduling event.")
+    except gspread.exceptions.WorksheetNotFound:
+        # create embed
+        embed_fail = discord.Embed(title="Game does not exist. Make sure arguments are in Game, Date, Time order and try again. If that doesn't work, see the addgame command.", color=RED)
+        embed_fail.set_author(name="Game not found", icon_url=ERROR)
+        # -
+        await ctx.message.channel.send(embed=embed_fail)  
         
     print(sys.exc_info()[0])
 
@@ -300,22 +371,38 @@ async def schedule(ctx, game="", date="", time="", name=""):
                     print("Cells: {}".format(cells))
 
                 sheet.update_cells(cells, "RAW")
-                await ctx.message.channel.send(":white_check_mark: Scheduled game night for game {} successfully.".format(game))
+                # create embed
+                embed_info = discord.Embed(title="Scheduled game night successfully!.", color=GREEN)
+                embed_info.set_author(name="Schedule Success", icon_url=SUCCESS)
+                # -
+                await ctx.message.channel.send(":white_check_mark: Scheduled game night successfully.")
                 return
     except gspread.exceptions.WorksheetNotFound:
-        await ctx.message.channel.send("Game does not exist. Make sure arguments are in Game, Date, Time order and try again. If that doesn't work, see the addgame command.")     
+        # create embed
+        embed_fail = discord.Embed(title="Game does not exist. Make sure arguments are in Game, Date, Time order and try again. If that doesn't work, see the addgame command.", color=RED)
+        embed_fail.set_author(name="Game not found", icon_url=ERROR)
+        # -
+        await ctx.message.channel.send(embed=embed_fail)     
 
 @bot.command(name="join")
 async def join(ctx, game="", eventid=""):
     spread = client.open(str(ctx.guild.id))
     sheet = spread.worksheet(game)
     if(eventid == ""):
-        await ctx.message.channel.send("Missing information required for joining. See help command for details.")
+        # create embed
+        embed_fail = discord.Embed(title="Missing information required for joining.",description="See help command for details", color=RED)
+        embed_fail.set_author(name="Incomplete Command", icon_url=ERROR)
+        # -
+        await ctx.message.channel.send(embed=embed_fail)
         return
     for i in range(1, spread.worksheet(game).row_count): #Looping through all the rows
-            if(str(sheet.cell(sheet.find(eventid).row-1+i,1).value) == (str(ctx.message.author.name)+"#"+str(ctx.message.author.discriminator))): #Get the first cell in that column that's blank
+            if(sheet.cell(i,1).value == str(ctx.message.author.name)+"#"+str(ctx.message.author.discriminator)): #Get the first cell in that column that's blank
+                # create embed
+                embed_fail = discord.Embed(title="Event",description=str(eventname), color=RED)
+                embed_fail.set_author(name="You're already signed up for this event", icon_url=ERROR)
+                # -
 
-                await ctx.message.channel.send("You're already signed up for this event :confused:")
+                await ctx.message.channel.send(embed=embed_fail)
                 return
             if(sheet.cell(i,1).value == ""): #Get the first cell in that column that's blank
             
@@ -326,10 +413,20 @@ async def join(ctx, game="", eventid=""):
         eventCellRow = sheet.find(eventid)
         sheet.update_cell(eventCellRow.row+int(numplayers), 1, str(ctx.message.author.name)+"#"+str(ctx.message.author.discriminator))
         sheet.update_cell((sheet.find("Num Players").row)+1,(sheet.find("Num Players").col),int(numplayers)+1)
-        await ctx.message.channel.send(":white_check_mark: Joined game night successfully.")
+
+        # create embed
+        embed_info = discord.Embed(title="Event",description=str(eventname), color=GREEN)
+        embed_info.set_author(name="Joined game night successfully!", icon_url=SUCCESS)
+        # -
+        await ctx.message.channel.send(embed=embed_info)
         return
     except gspread.exceptions.APIError:
-        await ctx.message.channel.send("Event does not exist. Make sure Event Name is valid.")
+        # create embed
+        embed_fail = discord.Embed(title="Event",description=str(eventname), color=RED)
+        embed_fail.set_author(name="Event does not exist.", icon_url=ERROR)
+        # -
+        await ctx.message.channel.send(embed=embed_fail)
+    
 
 
 @bot.command(name="addalias")
