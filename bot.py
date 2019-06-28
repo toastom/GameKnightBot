@@ -107,6 +107,11 @@ async def on_guild_join(guild):
         spreadsheet.share('gameknightbot@gmail.com', perm_type='user', role='writer')
         general = find(lambda x: x.name == 'general', guild.text_channels)
         if general and general.permissions_for(guild.me).send_messages:
+                game_cell  = spreadsheet.sheet1.cell("A1")
+                alias_cell = spreadsheet.sheet1.cell("B1")
+                game_cell.update_cell("Game")
+                alias_cell.update_cell("Alias")
+
                 await general.send('Hello a Spreadsheet with the name `{}` has been created for your server'.format(str(guild.id)))
     except gspread.exceptions.APIError:
         general = find(lambda x: x.name == 'general', guild.text_channels)
@@ -164,6 +169,10 @@ async def delete_game(ctx, *, game=None):
         if(str(game) == i.title.lower()):
             spread.del_worksheet(i)
             game = game.capitalize()
+
+            old_game_alias = spread.sheet1.find(game)
+            spread.sheet1.delete_row(old_game_alias.row)
+
             await ctx.message.channel.send("Game {} successfully deleted.".format(str(game)))
             return
         elif(game == None):
