@@ -10,13 +10,13 @@ GameKnightBot is a helpful game night scheduling bot using Google Spreadsheets A
 
 -Hey, we get it. Some people have different names for games. You don't know how many times people are talking about GTA V, and I have no idea what they're talking about, because I call it "carGame." Well aliases are for you! Type "gk!addalias [game] [alias]" and the bot will register when you try to sign up for a game using that alias. For example if you had the alias "Civ 5" for "Civ V", then joining a Civ V event, you could type "gk!join "Civ 5" [Event ID]" to join instead.
 
--Want a less detailed but probably just as helpful now that you understand the basics version of what I just said? Type "!gk help" for info about each command and how to use it.
+-Want a less detailed but probably just as helpful now that you understand the basics version of what I just said? Type "gk!help" for info about each command and how to use it.
 
 # About Our Team
 
 Our team is a group of teenagers all from different places, representing US West Coast, US East Coast, Winnepeg, and even the Netherlands. We had a lot of fun figuring things out during this competition, and were really inspired by tom233145#0069's original idea for this bot. Our team members are listed here as Pinkpi#0001 (16), tom233145#0069 (17), hamdi#0001 (18), and Kirbae#0001 (19).
 
-"I'm Pinkpi and my favorite game to play with people is generally Duck Game because we mess around the whole time and try out glitches and it's super fun. I hope this bot can help people stay more organized when creating events. I suck at organization, that's why I created a robot to do it instead of me. I'm so glad that our team situtation worked out the way it did, everyone was super helpful and amazing. <3 Love you guys!" -Me (Pinkpi)
+"I'm Pinkpi and my favorite game to play with people is generally details><summary>Duck game</summary><p>and hunniepop</p></details> because we mess around the whole time and try out glitches and it's super fun. I hope this bot can help people stay more organized when creating events. I suck at organization, that's why I created a robot to do it instead of me. I'm so glad that our team situtation worked out the way it did, everyone was super helpful and amazing. <3 Love you guys!" -Me (Pinkpi)
 
 "I'm Hamdi and my favorite game to play with people is Overwatch because I really like being stuck in Gold since season 2" -🧂Hamdi🧂
 
