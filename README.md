@@ -6,7 +6,7 @@ GameKnight is a helpful game night scheduling bot using Google Spreadsheets API 
 
 -So you're ready to schedule a game? GameKnightBot makes this easy for you. Just type "gk!schedule [game] [date] [time] [optional: event name]" and it will be automatically scheduled for you and assigned an Event ID. This EventID is unique to every event in the game spreadsheet, and can be given to friends and others to sign up easily.
 
--Want to join a game? Find out the EventID, then type "gk!join [game] [Event ID]." This will sign you up for the event with the same Event ID for the corresponding game. Don't be late!
+-Want to join a game? Find out the EventID, then type "gk!join [game] [Event ID]." This will sign you up for the event with the same Event ID for the corresponding game. Don't be late! If you want more info about an event, just type "gk!info [Event ID]".
 
 -Hey, we get it. Some people have different names for games. You don't know how many times people are talking about GTA V, and I have no idea what they're talking about, because I call it "carGame." Well aliases are for you! Type "gk!addalias [game] [alias]" and the bot will register when you try to sign up for a game using that alias. For example if you had the alias "Civ 5" for "Civ V", then joining a Civ V event, you could type "gk!join "Civ 5" [Event ID]" to join instead.
 
