@@ -18,7 +18,7 @@ Hello! Thanks for this awesome experience to meet with others and improve oursel
 
 # About Our Team
 
-Our team is a group of teenagers all from different places, representing US West Coast, US East Coast, Winnepeg, and even the Netherlands. We had a lot of fun figuring things out during this competition, and were really inspired by tom233145#0069's original idea for this bot. Our team members are listed here as Pinkpi#0001 (16), tom233145#0069 (17), hamdi#0001 (18), and Kirbae#0001 (19).
+Our team is a group of teenagers all from different places, representing US West Coast, US East Coast, Winnipeg Canada, and even the Netherlands. We had a lot of fun figuring things out during this competition, and were really inspired by tom233145#0069's original idea for this bot. Our team members are listed here as Pinkpi#0001 (16), tom233145#0069 (17), hamdi#0001 (18), and Kirbae#0001 (19).
 
 "I'm Pinkpi and my favorite game to play with people is generally Duck Game because we mess around the whole time and try out glitches and it's super fun. I hope this bot can help people stay more organized when creating events. I suck at organization, that's why I created a robot to do it instead of me. I'm so glad that our team situation worked out the way it did, everyone was super helpful and amazing. <3 Love you guys!" -Me (Pinkpi)
 
