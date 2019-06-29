@@ -12,7 +12,8 @@ from gspread import Client
 from oauth2client.service_account import ServiceAccountCredentials
 
 # We'll need to substitute the Prefix for an Enviroment Variable
-BOT_PREFIX = os.environ['prefix'] # -Prefix is need to declare a Command in discord ex: !pizza "!" being the Prefix
+#BOT_PREFIX = os.environ['prefix'] # -Prefix is need to declare a Command in discord ex: !pizza "!" being the Prefix
+BOT_PREFIX = 'gk!'
 TOKEN = os.environ['token'] # The token is also substituted for security reasons
 # Icons for embeds
 SUCCESS = "http://www.pngmart.com/files/3/Green-Tick-PNG-Pic.png"
@@ -684,21 +685,19 @@ async def info(ctx, eventid=""):
 
 
 
-
-
-
-
 bot.remove_command('help')
 
 @bot.command(name="help")
 async def helpembed(ctx,):
     embed = discord.Embed(title="Help")
-    embed.add_field(name=BOT_PREFIX + "addgame [gamename]", value="Adds the mentioned game to the spreadsheet", inline = False)
-    embed.add_field(name=BOT_PREFIX + "allgames", value="Prints all games that are in the spreadsheet", inline = False)
-    embed.add_field(name=BOT_PREFIX + "deletegame [gamename]", value="Deletes the mentioned game from the spreadsheet", inline=True)
-    embed.add_field(name=BOT_PREFIX + "schedule [game]  [date] [time] [name]", value="Schedules an event(Requires gamemaster role)", inline = True)
-    embed.add_field(name=BOT_PREFIX + "join [game][event id]", value ="Joins the event you selected", inline = False)
-    embed.add_field(name=BOT_PREFIX + "addalias [game] [alias]", value="adds an alias to make it easier to add games", inline=False)
+    embed.add_field(name=BOT_PREFIX + "addgame [gamename]", value="Adds the mentioned game to the spreadsheet.", inline = False)
+    embed.add_field(name=BOT_PREFIX + "allgames", value="Prints all games that are in the spreadsheet.", inline = False)
+    embed.add_field(name=BOT_PREFIX + "deletegame [gamename]", value="Deletes the mentioned game from the spreadsheet.", inline=True)
+    embed.add_field(name=BOT_PREFIX + "schedule [game]  [date] [time] [name]", value="Schedules an event(Requires Gamemaster role).", inline = True)
+    embed.add_field(name=BOT_PREFIX + "join [game][event id]", value ="Joins the event you selected.", inline = False)
+    embed.add_field(name=BOT_PREFIX + "addalias [game] [alias]", value="Adds an alias to make it easier to add games.", inline=False)
+    embed.add_field(name=BOT_PREFIX + "events [game]", value="Shows all events with IDs for the mentioned game.", inline=False)
+    embed.add_field(name=BOT_PREFIX + "info [eventid]", value="Shows all details related to the mentenioned event.", inline=False)
     embed.add_field(name=BOT_PREFIX + "help", value="Shows this screen", inline = True)
     embed.set_footer(text="Made by Kirbae#0001, tom233145#0069, Pinkpi#0001, hamdi#0001")
     await ctx.message.channel.send(embed=embed)
