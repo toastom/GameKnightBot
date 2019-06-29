@@ -596,6 +596,94 @@ async def add_alias(ctx, game="", *, alias=""):
             await ctx.message.channel.send("```{}```".format(str(alias_list)))
             return
 
+@bot.command(name="info")
+async def info(ctx, eventid=""):
+    if(eventid == ""):
+        embed_fail = discord.Embed(description="Please include the id of the event you want.\
+                                     Use the events command to view event ids.")
+        embed_fail.set_author(name="Missing Event ID.", icon_url=ERROR)
+        await ctx.message.channel.send(embed=embed_fail)
+        return
+
+    game_id = eventid[:4]
+    print(game_id)
+
+    spread = client.open(str(ctx.guild.id))
+    sheets = spread.worksheets()
+    for s in sheets:
+        #Check each sheet's first event id. If it's empty or doesn't match the game_id, skip it
+        #Skip past Sheet1 because it doesn't have Event Id
+        if(s.title == "Sheet1"):
+            continue
+        
+        event_label = s.find("Event Id")
+        first_event = s.cell(event_label.row + 1, event_label.col)
+        if(str(first_event.value) == "" or str(first_event.value)[:4] != game_id):
+            print("Wrong game. Continuing...")
+            continue
+        #If we found the right game
+        elif(str(first_event.value)[:4] == game_id):
+            try:
+                cell = s.find(eventid)
+                print(cell)
+                
+                date = s.find("Date")
+                time = s.find("Time")
+                name = s.find("Name")
+                players = s.find("Player Name")
+                num_players = s.find("Num Players")
+
+                embed_ready = discord.Embed(color=BLUE)
+                embed_ready.set_author(name="Info for event: {}".format(cell.value), icon_url=INFO)
+                
+                current_cell = s.cell(cell.row, date.col)
+                embed_ready.add_field(name=date.value, value=current_cell.value, inline=True)
+
+                current_cell = s.cell(cell.row, time.col)
+                embed_ready.add_field(name=time.value, value=current_cell.value, inline=True)
+
+                current_cell = s.cell(cell.row, name.col)
+                name_val = ""
+                #If the current cell value is empty, make it something
+                if(current_cell.value == ""):
+                    name_val = "None"
+                else:
+                    name_val = current_cell.value
+                embed_ready.add_field(name=name.value, value=name_val, inline=True)
+
+                current_cell = s.cell(cell.row, num_players.col)
+                print("Num players cell: {}".format(current_cell.value))
+                embed_ready.add_field(name=num_players.value, value=str(current_cell.value), inline=False)
+
+                print(current_cell.value)
+
+                vals = ""
+                for r in range(cell.row, cell.row + int(current_cell.value)):
+                    current_cell = s.cell(r, players.col)
+                    print(current_cell)
+
+                    print("Before append {}".format(vals))
+                    vals = vals + "\n" + str(current_cell.value)
+                    print("After append {}".format(vals))
+
+                    if(current_cell.value == ""):
+                        vals = vals + "\n" + "None"
+                        print("After append nothing {}".format(vals))
+                        break
+                    #vals = vals + "\n" + current_cell.value
+
+                #embed_ready.add_field(name="Number of PLayers", value=values, inline=False)
+                embed_ready.add_field(name="Players", value=vals, inline=False)
+
+                await ctx.message.channel.send(embed=embed_ready)
+
+                return
+            except gspread.exceptions.CellNotFound:
+                await ctx.message.channel.send(":x: An unknown error occurred when finding the event.")
+                return
+
+
+
 
 
 
@@ -614,6 +702,7 @@ async def helpembed(ctx,):
     embed.add_field(name=BOT_PREFIX + "help", value="Shows this screen", inline = True)
     embed.set_footer(text="Made by Kirbae#0001, tom233145#0069, Pinkpi#0001, hamdi#0001")
     await ctx.message.channel.send(embed=embed)
+
 
 bot.run(TOKEN)
 
