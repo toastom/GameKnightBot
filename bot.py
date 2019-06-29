@@ -479,12 +479,12 @@ async def join(ctx, game="", eventid=""):
         numplayers = sheet.cell((sheet.find(eventid).row), (sheet.find("Num Players").col)).value
 
         eventCellRow = sheet.find(eventid)
-        sheet.update_cell(eventCellRow.row, 1, "these people joined:")
+        #sheet.update_cell(eventCellRow.row, 1, "these people joined:")
         empty_row = ['' for cell in range(sheet.col_count)]
         insertion_row = int(eventCellRow.row + int(numplayers) + 1)
         sheet.insert_row(empty_row, index=insertion_row)
         sheet.update_cell((sheet.find(eventid).row),(sheet.find("Num Players").col),int(numplayers)+1)
-        sheet.update_cell(eventCellRow.row + int(numplayers) + 1, 1, str(ctx.message.author.name) + "#" + str(ctx.message.author.discriminator))
+        sheet.update_cell(eventCellRow.row + int(numplayers), 1, str(ctx.message.author.name) + "#" + str(ctx.message.author.discriminator))
 
 
 
