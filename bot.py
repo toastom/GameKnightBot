@@ -30,7 +30,13 @@ bot = commands.Bot(command_prefix=BOT_PREFIX)
 # Google Credentials authorization
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive.file",
         "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
+#creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
+
+json_creds = os.getenv("CREDS_JSON")
+creds_dict = json.loads(json_creds)
+creds_dict["private_key"] = creds_dict["private_key"].replace("\\\\n", "\n")
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scopes)
+
 client: Client = gspread.authorize(creds)
 
 def check_server_alias(game, context):
