@@ -32,10 +32,15 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
         "https://www.googleapis.com/auth/drive"]
 #creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
 
-json_creds = os.getenv("CREDS_JSON")
-creds_dict = json.loads(json_creds)
-creds_dict["private_key"] = creds_dict["private_key"].replace("\\\\n", "\n")
-creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+try: #Runs fine on Heroku, catches here locally
+    json_creds = os.getenv("CREDS_JSON")
+
+    creds_dict = json.loads(json_creds)
+    creds_dict["private_key"] = creds_dict["private_key"].replace("\\\\n", "\n")
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+    
+except TypeError: #For testing locally
+    creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
 
 client: Client = gspread.authorize(creds)
 
@@ -126,18 +131,19 @@ async def on_guild_join(guild):
         spreadsheet = client.create(str(guild.id))
         spreadsheet.share('gameknightbot@gmail.com', perm_type='user', role='writer')
         # create embed
+        print("\n" + str(guild.icon) + "\n")
         embed_ready = discord.Embed(title="You're ready to create and join game nights! ", description=str(guild.id), color=GREEN)
-        embed_ready.set_author(name="A spreadsheet with your server ID has been made!", icon_url=str(guild.icon))
+        embed_ready.set_author(name="A spreadsheet with your server ID has been made!", icon_url=SUCCESS) #Had to replace icon bc of unavoidable error
         # -
         general = find(lambda x: x.name == 'general', guild.text_channels)
         if general and general.permissions_for(guild.me).send_messages:
                 #game_cell  = spreadsheet.sheet1.cell("A1")
                 #alias_cell = spreadsheet.sheet1.cell("B1")
 
-                game_cell  = spreadsheet.sheet1.cell(1, 1)
-                alias_cell = spreadsheet.sheet1.cell(1, 2)
-                game_cell.update_cell("Game")
-                alias_cell.update_cell("Alias")
+                game_cell  = spreadsheet.sheet1.update_cell(1, 1, "Game")
+                alias_cell = spreadsheet.sheet1.update_cell(1, 2, "Alias")
+                #game_cell.update_cell("Game")
+                #alias_cell.update_cell("Alias")
 
                 await general.send(embed=embed_ready)
     except gspread.exceptions.APIError:
