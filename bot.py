@@ -208,9 +208,10 @@ async def all_games(ctx):
                 print(cell)
                 cell = list(filter(None, cell))
                 events = len(cell)-1
-                embed_game = discord.Embed(title="number of events: " + str(events), description=str(amount), color=BLUE)
+                embed_game = discord.Embed(title="Number of events: " + str(events), description=str(amount), color=BLUE)
                 embed_game.set_author(name=i.title, icon_url=INFO)
                 #await ctx.message.channel.send(embed=embed_game)
+        await ctx.message.channel.send(embed=embed_game)
     # create embed
     else:
         game_list = game_list.split(", ")
@@ -226,9 +227,10 @@ async def all_games(ctx):
                 cell = list(filter(None, cell))
                 events = len(cell) - 1
                 embed_info.add_field(name=i.title, value="Number of events: " + str(events), inline=False)
-                await ctx.message.channel.send(embed=embed_info)
-                return
-    await ctx.message.channel.send(embed=embed_game)
+                #await ctx.message.channel.send(embed=embed_info)
+        await ctx.message.channel.send(embed=embed_info)
+                
+    
     # -
 
 
