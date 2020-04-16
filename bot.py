@@ -244,7 +244,7 @@ async def all_games(ctx):
 
 
 @bot.command(name="events")
-async def events(ctx, game):
+async def events(ctx, game=""):
     spread = client.open(str(ctx.guild.id))
     #Get a list of all worksheets - check
     #Have the bot say them - sheets - list
@@ -323,7 +323,7 @@ async def schedule(ctx, game="", date="", time="", name=""):
     
     if(gamemaster == None): #If "Gamemaster" role was not found
         # create embed
-        embed_fail = discord.Embed(title="Gamemaster role does not exist. Contact server staff to ask them to make this role. (case-sensitive)", color=RED)
+        embed_fail = discord.Embed(title="Gamemaster role does not exist. Contact server staff in order to make this role. (case-sensitive)", color=RED)
         embed_fail.set_author(name="Gamemaster not available", icon_url=ERROR)
         # -
         await ctx.message.channel.send(embed=embed_fail)
@@ -354,10 +354,9 @@ async def schedule(ctx, game="", date="", time="", name=""):
     game = check_default_alias(game, ctx)
     spread = client.open(str(ctx.guild.id))
     sheet = spread.worksheet(game)
-        
+    
+    #Duplicate event checking
     try:
-        
-
         var_date = None
         var_time = None
 
@@ -396,22 +395,25 @@ async def schedule(ctx, game="", date="", time="", name=""):
     try:
         sheet = spread.worksheet(game)
 
+        #Create random event id
         neweventid = game[0:2]+game[-2:]+"-"+str(randint(10000000, 99999999))
         cell = sheet.find("Player Name")
         for i in range(cell.row, sheet.row_count): #Looping through all the rows
             cell = sheet.cell(i, cell.col)
             if(cell.value == ""): #Get the first cell in that column that's blank
+                sheet.update_cell(i, cell.col, str(ctx.message.author.name))
+
                 sheet.update_cell(i, cell.col + 1, date)
                 time_cell = sheet.update_cell(i, cell.col + 2, time)
 
                 if(name != ""):
-                    name_cell = sheet.update_cell(i, cell.col + 2, name)
+                    name_cell = sheet.update_cell(i, cell.col + 3, name)
                     
                 sheet.update_cell(sheet.find("Event Id").row+i-1, sheet.find("Event Id").col, neweventid)
                 sheet.update_cell(sheet.find("Num Players").row+i-1, sheet.find("Num Players").col, 0)
 
                 # create embed
-                embed_finish = discord.Embed(title="New players can join using the event using the Event ID.",description="Command to join is {}join [game] [event id]".format(BOT_PREFIX), color=GREEN)
+                embed_finish = discord.Embed(title="New players can join using the Event ID.",description="Command to join is {}join [game] [event id]".format(BOT_PREFIX), color=GREEN)
                 embed_finish.add_field(name="Event ID", value=neweventid, inline=True)
                 embed_finish.add_field(name="Game", value=game, inline=True)
                 embed_finish.set_author(name="Schedule Success", icon_url=SUCCESS)
