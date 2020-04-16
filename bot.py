@@ -131,8 +131,11 @@ async def on_guild_join(guild):
         # -
         general = find(lambda x: x.name == 'general', guild.text_channels)
         if general and general.permissions_for(guild.me).send_messages:
-                game_cell  = spreadsheet.sheet1.cell("A1")
-                alias_cell = spreadsheet.sheet1.cell("B1")
+                #game_cell  = spreadsheet.sheet1.cell("A1")
+                #alias_cell = spreadsheet.sheet1.cell("B1")
+
+                game_cell  = spreadsheet.sheet1.cell(1, 1)
+                alias_cell = spreadsheet.sheet1.cell(1, 2)
                 game_cell.update_cell("Game")
                 alias_cell.update_cell("Alias")
 
