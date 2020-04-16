@@ -1,4 +1,6 @@
 git+https://github.com/Rapptz/discord.py.git
 
 gspread
-oauthlib
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
