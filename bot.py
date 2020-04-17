@@ -245,11 +245,21 @@ async def all_games(ctx):
 
 @bot.command(name="events")
 async def events(ctx, game=""):
-    spread = client.open(str(ctx.guild.id))
+    if(game == ""):
+        embed_fail = discord.Embed(description="Events Error!", color=RED)
+        embed_fail.set_author(name="Events List", icon_url=ERROR)
+        embed_fail.add_field(name="Error", value="\nSpecify a game to check for events.")
+        await ctx.message.channel.send(embed=embed_fail)
+        return
+
+    
     #Get a list of all worksheets - check
     #Have the bot say them - sheets - list
-    game = check_default_alias(game, ctx)
+    
+    spread = client.open(str(ctx.guild.id))
     sheet = spread.worksheet(game)
+    game = check_default_alias(game, ctx)
+    
     cell = sheet.find("Event Id").col
     cell = sheet.col_values(cell)
     print(cell)
